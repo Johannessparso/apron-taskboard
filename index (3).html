@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Apron Task Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#1f2433;--surface:#282e3e;--surface2:#303748;--surface3:#3a4256;
+--border:#454e65;--border-light:#545e78;
+--text:#eceff6;--text-mid:#a3adc2;--text-dim:#7a849c;
+--blue:#6ab0ff;--blue-bg:rgba(106,176,255,.1);--blue-border:rgba(106,176,255,.25);
+--green:#4ade80;--green-bg:rgba(74,222,128,.1);--green-border:rgba(74,222,128,.25);
+--amber:#fbbf24;--amber-bg:rgba(251,191,36,.1);--amber-border:rgba(251,191,36,.25);
+--red:#fb7185;--red-bg:rgba(251,113,133,.1);--red-border:rgba(251,113,133,.25);
+--purple:#c4a5ff;--purple-bg:rgba(196,165,255,.1);--purple-border:rgba(196,165,255,.25);
+--r:10px;--shadow:0 2px 8px rgba(0,0,0,.15)
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.app-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6ab0ff,#c4a5ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px}
+.app-title{font-size:15px;font-weight:700}.app-sub{font-size:11px;color:var(--text-dim)}
+.user-bar{display:flex;align-items:center;gap:6px}
+.user-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);display:flex;align-items:center;gap:6px}
+.user-chip.active{border-color:var(--blue-border);background:var(--blue-bg);color:var(--blue)}
+.chip-dot{width:8px;height:8px;border-radius:50%}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:8px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.progress-strip{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:flex-end;gap:20px}
+.prog-stats{display:flex;gap:18px}
+.prog-stat{display:flex;align-items:center;gap:7px}
+.prog-stat-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;line-height:1}
+.prog-stat-lbl{font-size:11px;color:var(--text-dim)}
+.board{display:flex;gap:14px;padding:18px 24px;overflow-x:auto;min-height:calc(100vh - 180px)}
+@media(max-width:900px){.board{flex-direction:column}}
+.col{min-width:310px;max-width:350px;flex:1;display:flex;flex-direction:column;background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+@media(max-width:900px){.col{min-width:auto;max-width:none}}
+.col-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.col-head.todo{background:linear-gradient(135deg,rgba(106,176,255,.06),transparent)}
+.col-head.prog{background:linear-gradient(135deg,rgba(251,191,36,.06),transparent)}
+.col-head.done{background:linear-gradient(135deg,rgba(74,222,128,.06),transparent)}
+.col-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.col-dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 8px currentColor}
+.col-count{font-size:11px;font-weight:700;color:var(--text-dim);background:var(--surface3);padding:3px 10px;border-radius:10px}
+.col-body{flex:1;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.task-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s;position:relative}
+.task-card:hover{border-color:var(--border-light);transform:translateY(-1px);box-shadow:var(--shadow)}
+.task-card.unclaimed{border-color:var(--purple-border);background:var(--purple-bg)}
+.task-card.unclaimed::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--purple);border-radius:3px 0 0 3px}
+.task-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.task-title{font-size:13px;font-weight:600;line-height:1.4;flex:1}
+.task-priority{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0}
+.pri-high{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.pri-medium{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.pri-low{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.task-desc{font-size:11px;color:var(--text-mid);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.deadline-bar{height:3px;border-radius:2px;margin-bottom:10px;background:var(--surface3);overflow:hidden}
+.deadline-fill{height:100%;border-radius:2px}
+.task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid var(--surface2)}
+.av-d{background:#8b5cf6}.av-j{background:#3b82f6}.av-h{background:#10b981}
+.avatar-stack{display:flex}.avatar-stack .avatar+.avatar{margin-left:-6px}
+.assignee-names{font-size:10px;font-weight:600;color:var(--text-mid)}
+.unclaimed-badge{font-size:10px;font-weight:700;color:var(--purple);display:flex;align-items:center;gap:4px}
+.unclaimed-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--purple);animation:pulse 2s infinite}
+.claim-btn-inline{font-size:10px;font-weight:700;color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-border);padding:3px 10px;border-radius:6px;cursor:pointer;transition:all .15s}
+.claim-btn-inline:hover{background:var(--purple);color:#fff}
+.task-dl{font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:3px}
+.task-dl.overdue{color:var(--red);font-weight:700}
+.task-dl.soon{color:var(--amber);font-weight:600}
+.task-comments-badge{font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:3px;margin-left:auto;background:var(--surface3);padding:2px 7px;border-radius:8px}
+.add-btn{width:calc(100% - 20px);margin:0 10px 10px;padding:10px;border-radius:8px;border:1px dashed var(--border);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:all .15s}
+.add-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:slideUp .25s cubic-bezier(.16,1,.3,1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--surface3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:all .15s}
+.modal-close:hover{background:var(--border);color:var(--text)}
+.modal-body{padding:16px 24px 24px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em}
+.field input,.field textarea,.field select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:13px;color:var(--text);background:var(--surface2);transition:border-color .15s}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:60px}
+.field select option{background:var(--surface2)}
+.field-row{display:flex;gap:10px}.field-row .field{flex:1}
+.a-chips{display:flex;gap:6px;flex-wrap:wrap}
+.a-chip{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);transition:all .15s;display:flex;align-items:center;gap:6px}
+.a-chip:hover{border-color:var(--text-dim)}
+.a-chip.selected{border-color:var(--blue-border);background:var(--blue-bg);color:var(--blue)}
+.a-chip .ca{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;border:none}
+.btn{padding:10px 20px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#000;font-weight:700}.btn-primary:hover{background:#79b8ff}
+.btn-secondary{background:var(--surface3);color:var(--text-mid)}.btn-secondary:hover{color:var(--text)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}.btn-danger:hover{background:var(--red);color:#fff}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.claim-section{background:var(--purple-bg);border:1px solid var(--purple-border);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center}
+.claim-section p{font-size:13px;color:var(--purple);font-weight:600;margin-bottom:8px}
+.claim-btn{padding:10px 24px;border-radius:8px;border:none;background:var(--purple);color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.claim-btn:hover{filter:brightness(1.1)}
+.join-section{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center}
+.join-section p{font-size:13px;color:var(--blue);font-weight:600;margin-bottom:8px}
+.move-btns{display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.move-btn{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text-mid);text-align:center}
+.move-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.move-btn.cur{background:var(--surface3);color:var(--text-dim);cursor:default;pointer-events:none}
+.comments-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.comments-title{font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em}
+.comment{display:flex;gap:10px;margin-bottom:12px}
+.comment-body{flex:1}
+.comment-header{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.comment-name{font-size:12px;font-weight:700}
+.comment-time{font-size:10px;color:var(--text-dim)}
+.comment-text{font-size:12px;color:var(--text-mid);line-height:1.5}
+.comment-system{font-style:italic;color:var(--text-dim)}
+.comment-input{display:flex;gap:8px;margin-top:8px}
+.comment-input input{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)}
+.comment-input input:focus{outline:none;border-color:var(--blue)}
+.comment-input button{padding:8px 16px;border-radius:8px;border:none;background:var(--blue);color:#000;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.empty-col{text-align:center;padding:24px 16px;color:var(--text-dim);font-size:12px}
+.created-by{font-size:11px;color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.loading-screen{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px}
+.loading-screen .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+<div class="topbar-left">
+<div class="app-icon">A</div>
+<div><div class="app-title">Apron Task Board</div><div class="app-sub">Apron Leadership — CPH</div></div>
+</div>
+<div class="user-bar">
+<div class="user-chip active" id="myChip"><span class="chip-dot" id="myDot"></span><span id="myName"></span><span class="sync-dot" id="syncDot" title="Synkroniseret"></span></div>
+</div>
+</div>
+<div class="progress-strip" id="progStrip"></div>
+<div class="board" id="board"><div class="loading-screen"><div class="spinner"></div><span style="color:var(--text-dim);font-size:13px">Forbinder...</span></div></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ── Firebase Config ──
+const firebaseConfig = {
+  apiKey: "AIzaSyCseu1ZG-FcKQQcWzSzFuMC-S7jrN-KZBU",
+  authDomain: "apron-taskboard.firebaseapp.com",
+  databaseURL: "https://apron-taskboard-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "apron-taskboard",
+  storageBucket: "apron-taskboard.firebasestorage.app",
+  messagingSenderId: "791908822417",
+  appId: "1:791908822417:web:3ee29a6d139ab745f63e30"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const tasksRef = db.ref('tasks');
+const metaRef = db.ref('meta');
+
+// ── Constants ──
+const USERS=['Johannes','Helmer','Daniel'];
+const AV={Johannes:{cls:'av-j',ini:'JS',color:'#3b82f6'},Helmer:{cls:'av-h',ini:'HE',color:'#10b981'},Daniel:{cls:'av-d',ini:'DL',color:'#8b5cf6'}};
+const ST=[{key:'todo',label:'To Do',dot:'var(--blue)',cls:'todo'},{key:'in-progress',label:'I gang',dot:'var(--amber)',cls:'prog'},{key:'done',label:'Færdig',dot:'var(--green)',cls:'done'}];
+
+// ── User from URL ──
+const urlParams=new URLSearchParams(window.location.search);
+const urlUser=urlParams.get('user');
+let cUser=USERS.includes(urlUser)?urlUser:null;
+
+if(!cUser){showUserPicker()}
+else{initBoard()}
+
+function showUserPicker(){
+  document.getElementById('myChip').style.display='none';
+  document.getElementById('progStrip').innerHTML='';
+  document.getElementById('board').innerHTML=`<div style="margin:60px auto;text-align:center;max-width:400px">
+    <div style="font-size:40px;margin-bottom:16px">✈</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:6px">Apron Task Board</div>
+    <div style="font-size:13px;color:var(--text-mid);margin-bottom:28px">Vælg din profil for at fortsætte</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${USERS.map(u=>`<button onclick="location.href=location.pathname+'?user=${u}'" style="padding:16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s"
+        onmouseover="this.style.borderColor='${AV[u].color}'" onmouseout="this.style.borderColor='var(--border)'">
+        <span class="avatar ${AV[u].cls}" style="width:36px;height:36px;font-size:13px;border:none">${AV[u].ini}</span>${u}</button>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:20px">Bookmark dit link så du altid logger ind som dig selv</div>
+  </div>`;
+}
+
+function initBoard(){
+  document.getElementById('myName').textContent=cUser;
+  document.getElementById('myDot').style.background=AV[cUser].color;
+
+  let tasks=[];
+  let editTask=null;
+  let initialized=false;
+
+  // ── Firebase: listen for changes ──
+  tasksRef.on('value', snap=>{
+    const data=snap.val();
+    if(data){
+      tasks=Object.entries(data).map(([k,v])=>({...v,_key:k}));
+    }else{
+      tasks=[];
+      // First time: seed with example tasks
+      if(!initialized){seedTasks()}
+    }
+    initialized=true;
+    // Close modal if the task we're editing was deleted
+    if(editTask&&editTask._key&&!tasks.find(t=>t._key===editTask._key)){closeModal()}
+    render();
+  });
+
+  function seedTasks(){
+    const seed=[
+      {title:'Vagtskema april — færdiggør weekend-rotation',desc:'Gruppe A/B weekend-fordeling mangler balancering.',assignees:['Johannes'],createdBy:'Daniel',priority:'high',status:'in-progress',deadline:'2026-03-20',comments:[]},
+      {title:'Rekruttering — 4 nye ramp agents',desc:'Vi mangler 4 agenter til sommer.',assignees:['Helmer'],createdBy:'Daniel',priority:'high',status:'in-progress',deadline:'2026-03-15',comments:[]},
+      {title:'LH2446 complaint — send svar til Andrea',desc:'Ground crew contact failure. Headset task uassigned i RTP.',assignees:[],createdBy:'Daniel',priority:'high',status:'todo',deadline:'2026-03-14',comments:[]},
+    ];
+    seed.forEach(t=>tasksRef.push(t));
+  }
+
+  // ── Save to Firebase ──
+  function fbSave(task){
+    const key=task._key;
+    const data={...task};
+    delete data._key;
+    if(key){tasksRef.child(key).set(data)}
+    else{tasksRef.push(data)}
+  }
+  function fbDelete(key){if(key)tasksRef.child(key).remove()}
+
+  // ── Render ──
+  function render(){renderProgress();renderBoard()}
+
+  function renderProgress(){
+    const todo=tasks.filter(t=>t.status==='todo').length;
+    const prog=tasks.filter(t=>t.status==='in-progress').length;
+    const done=tasks.filter(t=>t.status==='done').length;
+    const unc=tasks.filter(t=>(!t.assignees||t.assignees.length===0)&&t.status!=='done').length;
+    document.getElementById('progStrip').innerHTML=`<div class="prog-stats">
+      <div class="prog-stat"><div class="prog-stat-val" style="color:var(--blue)">${todo}</div><div class="prog-stat-lbl">To Do</div></div>
+      <div class="prog-stat"><div class="prog-stat-val" style="color:var(--amber)">${prog}</div><div class="prog-stat-lbl">I gang</div></div>
+      <div class="prog-stat"><div class="prog-stat-val" style="color:var(--green)">${done}</div><div class="prog-stat-lbl">Færdig</div></div>
+      ${unc?`<div class="prog-stat"><div class="prog-stat-val" style="color:var(--purple)">${unc}</div><div class="prog-stat-lbl">Unclaimed</div></div>`:''}
+    </div>`;
+  }
+
+  function deadlineInfo(dl,status){
+    if(!dl||status==='done')return{pct:100,color:'var(--green)',label:'',cls:''};
+    const now=new Date(),d=new Date(dl),diff=Math.ceil((d-now)/(864e5));
+    if(diff<0)return{pct:100,color:'var(--red)',label:`${Math.abs(diff)}d overskredet`,cls:'overdue'};
+    if(diff<=3)return{pct:85,color:'var(--amber)',label:`${diff}d tilbage`,cls:'soon'};
+    if(diff<=7)return{pct:60,color:'var(--amber)',label:`${diff}d`,cls:''};
+    return{pct:35,color:'var(--green)',label:fmtDate(dl),cls:''};
+  }
+
+  function renderBoard(){
+    const board=document.getElementById('board');let h='';
+    ST.forEach(s=>{
+      const st=tasks.filter(t=>t.status===s.key).sort((a,b)=>{
+        const ua=(a.assignees||[]).length===0?0:1,ub=(b.assignees||[]).length===0?0:1;
+        if(ua!==ub)return ua-ub;
+        return({high:0,medium:1,low:2}[a.priority]||1)-({high:0,medium:1,low:2}[b.priority]||1);
+      });
+      h+=`<div class="col"><div class="col-head ${s.cls}">
+        <span class="col-title"><span class="col-dot" style="color:${s.dot};background:${s.dot}"></span>${s.label}</span>
+        <span class="col-count">${st.length}</span></div><div class="col-body">`;
+      if(!st.length)h+=`<div class="empty-col">Ingen opgaver her</div>`;
+      st.forEach(t=>{
+        const assignees=t.assignees||[];
+        const uc=assignees.length===0;
+        const pc=t.priority==='high'?'pri-high':t.priority==='medium'?'pri-medium':'pri-low';
+        const pl=t.priority==='high'?'Høj':t.priority==='medium'?'Medium':'Lav';
+        const di=deadlineInfo(t.deadline,t.status);
+        h+=`<div class="task-card${uc?' unclaimed':''}" onclick="window._openTask('${t._key}')">
+          <div class="task-top"><span class="task-title">${esc(t.title)}</span><span class="task-priority ${pc}">${pl}</span></div>
+          ${t.desc?`<div class="task-desc">${esc(t.desc)}</div>`:''}
+          ${t.deadline&&t.status!=='done'?`<div class="deadline-bar"><div class="deadline-fill" style="width:${di.pct}%;background:${di.color}"></div></div>`:''}
+          <div class="task-meta">`;
+        if(uc){
+          h+=`<span class="unclaimed-badge">Venter på claim</span>
+            <button class="claim-btn-inline" onclick="event.stopPropagation();window._claimTask('${t._key}')">Jeg tager den</button>`;
+        }else{
+          h+=`<div class="avatar-stack">`;
+          assignees.forEach(a=>{if(AV[a])h+=`<span class="avatar ${AV[a].cls}">${AV[a].ini}</span>`});
+          h+=`</div><span class="assignee-names">${assignees.join(' & ')}</span>`;
+        }
+        if(t.deadline&&t.status!=='done')h+=`<span class="task-dl ${di.cls}">${di.label}</span>`;
+        const cmts=t.comments||[];
+        if(cmts.length)h+=`<span class="task-comments-badge">💬 ${cmts.length}</span>`;
+        h+=`</div></div>`;
+      });
+      h+=`</div><button class="add-btn" onclick="window._newTask('${s.key}')">+ Ny opgave</button></div>`;
+    });
+    board.innerHTML=h;
+  }
+
+  // ── Global handlers (needed for onclick in HTML) ──
+  window._claimTask=function(key){
+    const t=tasks.find(x=>x._key===key);
+    if(!t)return;
+    const assignees=t.assignees||[];
+    if(!assignees.includes(cUser)){
+      assignees.push(cUser);
+      t.assignees=assignees;
+      const cmts=t.comments||[];
+      cmts.push({user:cUser,text:'Jeg tager denne opgave.',time:timeStr(),system:true});
+      t.comments=cmts;
+      fbSave(t);
+    }
+  };
+
+  window._newTask=function(status){
+    editTask={_key:null,title:'',desc:'',assignees:[],createdBy:cUser,priority:'medium',status,deadline:'',comments:[]};
+    renderModal();
+  };
+
+  window._openTask=function(key){
+    const t=tasks.find(x=>x._key===key);
+    if(!t)return;
+    editTask={...t,assignees:[...(t.assignees||[])],comments:[...(t.comments||[])]};
+    renderModal();
+  };
+
+  function renderModal(){
+    const t=editTask,isNew=!t._key;
+    let ov=document.createElement('div');ov.className='modal-overlay';ov.onclick=e=>{if(e.target===ov)closeModal()};
+    const assignees=t.assignees||[];
+    
+    let claimHtml='';
+    if(!isNew&&assignees.length===0)claimHtml=`<div class="claim-section"><p>Denne opgave venter på at blive claimed</p><button class="claim-btn" onclick="window._claimModal()">Jeg tager den (${cUser})</button></div>`;
+    else if(!isNew&&assignees.length===1&&!assignees.includes(cUser))claimHtml=`<div class="join-section"><p>Vil du hjælpe ${assignees[0]}?</p><button class="claim-btn" style="background:var(--blue)" onclick="window._joinModal()">Tilslut mig (${cUser})</button></div>`;
+
+    let aHtml=`<div class="field"><label>Ansvarlige (max 2)</label><div class="a-chips">`;
+    USERS.forEach(u=>{const sel=assignees.includes(u);aHtml+=`<div class="a-chip${sel?' selected':''}" data-user="${u}" onclick="window._togAssign('${u}')"><span class="ca ${AV[u].cls}">${AV[u].ini}</span>${u}</div>`});
+    aHtml+=`</div></div>`;
+
+    const cmts=t.comments||[];
+    let cHtml='';
+    if(!isNew){
+      cHtml=`<div class="comments-section"><div class="comments-title">💬 Kommentarer (${cmts.length})</div>`;
+      cmts.forEach(c=>{
+        cHtml+=`<div class="comment"><span class="avatar ${AV[c.user]?.cls||'av-j'}" style="border:none;width:20px;height:20px;font-size:8px">${AV[c.user]?.ini||'?'}</span>
+          <div class="comment-body"><div class="comment-header"><span class="comment-name">${esc(c.user)}</span><span class="comment-time">${esc(c.time)}</span></div>
+          <div class="comment-text${c.system?' comment-system':''}">${esc(c.text)}</div></div></div>`;
+      });
+      cHtml+=`<div class="comment-input"><input type="text" id="cInput" placeholder="Skriv en kommentar..." onkeydown="if(event.key==='Enter')window._addComment()"><button onclick="window._addComment()">Send</button></div></div>`;
+    }
+
+    let mvHtml='';
+    if(!isNew){mvHtml=`<div class="move-btns">`;ST.forEach(s=>{mvHtml+=`<button class="move-btn${s.key===t.status?' cur':''}" onclick="window._moveTask('${s.key}')">${s.key===t.status?'● ':''}${s.label}</button>`});mvHtml+=`</div>`}
+
+    ov.innerHTML=`<div class="modal">
+      <div class="modal-header"><span class="modal-title">${isNew?'Ny opgave':'Opgave'}</span><button class="modal-close" onclick="window._closeModal()">×</button></div>
+      <div class="modal-body">
+        ${!isNew&&t.createdBy?`<div class="created-by">Oprettet af <strong>${esc(t.createdBy)}</strong></div>`:''}
+        ${claimHtml}
+        <div class="field"><label>Titel</label><input type="text" id="tTitle" value="${esc(t.title)}" placeholder="Hvad skal gøres?"></div>
+        <div class="field"><label>Beskrivelse</label><textarea id="tDesc" placeholder="Tilføj detaljer...">${esc(t.desc||'')}</textarea></div>
+        ${aHtml}
+        <div class="field-row">
+          <div class="field"><label>Prioritet</label><select id="tPri"><option value="high"${t.priority==='high'?' selected':''}>Høj</option><option value="medium"${t.priority==='medium'?' selected':''}>Medium</option><option value="low"${t.priority==='low'?' selected':''}>Lav</option></select></div>
+          <div class="field"><label>Deadline</label><input type="date" id="tDl" value="${t.deadline||''}"></div>
+        </div>
+        ${mvHtml}${cHtml}
+        <div class="btn-row">
+          ${!isNew?`<button class="btn btn-danger" onclick="window._delTask()" style="margin-right:auto">Slet</button>`:''}
+          <button class="btn btn-secondary" onclick="window._closeModal()">Annuller</button>
+          <button class="btn btn-primary" onclick="window._saveTask()">${isNew?'Opret':'Gem'}</button>
+        </div>
+      </div></div>`;
+    document.body.appendChild(ov);
+  }
+
+  window._togAssign=function(u){
+    const a=editTask.assignees||[];
+    const i=a.indexOf(u);
+    if(i>=0)a.splice(i,1);else if(a.length<2)a.push(u);
+    editTask.assignees=a;
+    document.querySelectorAll('.a-chip').forEach(chip=>{
+      const chipUser=chip.getAttribute('data-user');
+      if(a.includes(chipUser)){chip.classList.add('selected')}else{chip.classList.remove('selected')}
+    });
+  };
+
+  window._claimModal=function(){
+    const a=editTask.assignees||[];
+    if(!a.includes(cUser)){a.push(cUser);editTask.assignees=a;
+    const t=tasks.find(x=>x._key===editTask._key);
+    if(t){t.assignees=[...a];const c=t.comments||[];c.push({user:cUser,text:'Jeg tager denne opgave.',time:timeStr(),system:true});t.comments=c;editTask.comments=[...c];fbSave(t)}}
+    closeModal();renderModal();
+  };
+
+  window._joinModal=function(){
+    const a=editTask.assignees||[];
+    if(!a.includes(cUser)&&a.length<2){a.push(cUser);editTask.assignees=a;
+    const t=tasks.find(x=>x._key===editTask._key);
+    if(t){t.assignees=[...a];const c=t.comments||[];c.push({user:cUser,text:`Tilslutter mig sammen med ${a[0]}.`,time:timeStr(),system:true});t.comments=c;editTask.comments=[...c];fbSave(t)}}
+    closeModal();renderModal();
+  };
+
+  window._closeModal=function(){closeModal()};
+  function closeModal(){const o=document.querySelector('.modal-overlay');if(o)o.remove();editTask=null}
+
+  window._saveTask=function(){
+    const ti=document.getElementById('tTitle').value.trim();
+    if(!ti)return;
+    const data={
+      title:ti,
+      desc:document.getElementById('tDesc').value.trim(),
+      priority:document.getElementById('tPri').value,
+      deadline:document.getElementById('tDl').value,
+      assignees:[...(editTask.assignees||[])],
+      comments:editTask.comments||[],
+      status:editTask.status,
+      createdBy:editTask.createdBy||cUser
+    };
+    if(editTask._key){
+      data._key=editTask._key;
+      fbSave(data);
+    }else{
+      fbSave(data);
+    }
+    closeModal();
+  };
+
+  window._delTask=function(){
+    if(editTask&&editTask._key){fbDelete(editTask._key);closeModal()}
+  };
+
+  window._moveTask=function(s){
+    if(!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);
+    if(!t)return;
+    t.status=s;
+    const c=t.comments||[];
+    c.push({user:cUser,text:`Flyttet til "${ST.find(x=>x.key===s).label}".`,time:timeStr(),system:true});
+    t.comments=c;
+    fbSave(t);
+    closeModal();
+  };
+
+  window._addComment=function(){
+    const inp=document.getElementById('cInput'),txt=inp.value.trim();
+    if(!txt||!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);
+    if(!t)return;
+    const c=t.comments||[];
+    c.push({user:cUser,text:txt,time:timeStr()});
+    t.comments=c;
+    fbSave(t);
+    editTask.comments=[...c];
+    closeModal();
+    window._openTask(editTask._key);
+  };
+}
+
+// ── Utilities ──
+function fmtDate(d){if(!d)return'';const dt=new Date(d),m=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];return`${dt.getDate()} ${m[dt.getMonth()]}`}
+function timeStr(){const n=new Date(),m=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];return`${n.getDate()} ${m[n.getMonth()]}, ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'):''}
+
+// ── Debug Console ──
+(function(){
+  const dbg=document.createElement('div');
+  dbg.id='debugPanel';
+  dbg.style.cssText='position:fixed;bottom:0;left:0;right:0;max-height:150px;overflow-y:auto;background:#1a1a2e;border-top:2px solid #f59e0b;font-family:JetBrains Mono,monospace;font-size:11px;padding:8px 12px;z-index:9999;display:none;color:#e2e8f0';
+  document.body.appendChild(dbg);
+
+  const togBtn=document.createElement('button');
+  togBtn.textContent='🐛 Debug';
+  togBtn.style.cssText='position:fixed;bottom:8px;right:8px;z-index:9999;padding:4px 10px;border-radius:6px;border:1px solid #f59e0b;background:#1a1a2e;color:#f59e0b;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer';
+  togBtn.onclick=()=>{dbg.style.display=dbg.style.display==='none'?'block':'none'};
+  document.body.appendChild(togBtn);
+
+  const logs=[];
+  function addLog(type,msg){
+    const colors={error:'#fb7185',warn:'#fbbf24',log:'#a3adc2',info:'#6ab0ff'};
+    logs.push({type,msg,time:new Date().toLocaleTimeString()});
+    if(logs.length>50)logs.shift();
+    dbg.innerHTML=logs.map(l=>`<div style="color:${colors[l.type]||'#a3adc2'};margin-bottom:2px"><span style="color:#525c69">[${l.time}]</span> <b>${l.type}</b>: ${l.msg}</div>`).join('');
+    dbg.scrollTop=dbg.scrollHeight;
+  }
+
+  const origError=console.error,origWarn=console.warn,origLog=console.log;
+  console.error=function(){origError.apply(console,arguments);addLog('error',Array.from(arguments).join(' '))};
+  console.warn=function(){origWarn.apply(console,arguments);addLog('warn',Array.from(arguments).join(' '))};
+  console.log=function(){origLog.apply(console,arguments);addLog('log',Array.from(arguments).join(' '))};
+
+  window.onerror=function(msg,src,line,col,err){addLog('error',`${msg} (line ${line})`);return false};
+  window.onunhandledrejection=function(e){addLog('error','Promise: '+e.reason)};
+
+  console.info=function(){addLog('info',Array.from(arguments).join(' '))};
+  console.info('Debug console loaded. User: '+(new URLSearchParams(window.location.search).get('user')||'none'));
+  console.info('Firebase DB: '+(typeof firebase!=='undefined'?'loaded':'NOT loaded'));
+})();
+</script>
+</body>
+</html>
