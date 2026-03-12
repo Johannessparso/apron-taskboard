@@ -6,6 +6,17 @@
 <title>Apron Task Board</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
+:root{
+--bg:#1f2433;--surface:#282e3e;--surface2:#303748;--surface3:#3a4256;
+--border:#454e65;--border-light:#545e78;
+--text:#eceff6;--text-mid:#a3adc2;--text-dim:#7a849c;
+--blue:#6ab0ff;--blue-bg:rgba(106,176,255,.1);--blue-border:rgba(106,176,255,.25);
+--green:#4ade80;--green-bg:rgba(74,222,128,.1);--green-border:rgba(74,222,128,.25);
+--amber:#fbbf24;--amber-bg:rgba(251,191,36,.1);--amber-border:rgba(251,191,36,.25);
+--red:#fb7185;--red-bg:rgba(251,113,133,.1);--red-border:rgba(251,113,133,.25);
+--purple:#c4a5ff;--purple-bg:rgba(196,165,255,.1);--purple-border:rgba(196,165,255,.25);
+--r:10px;--shadow:0 2px 8px rgba(0,0,0,.15)
+}
 [data-theme="dark"]{
 --bg:#1f2433;--surface:#282e3e;--surface2:#303748;--surface3:#3a4256;
 --border:#454e65;--border-light:#545e78;
@@ -36,6 +47,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .app-title{font-size:15px;font-weight:700}.app-sub{font-size:11px;color:var(--text-dim)}
 .topbar-right{display:flex;align-items:center;gap:8px}
 .user-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);display:flex;align-items:center;gap:6px}
+.user-bar{display:flex;align-items:center;gap:6px}
 .user-chip.active{border-color:var(--blue-border);background:var(--blue-bg);color:var(--blue)}
 .chip-dot{width:8px;height:8px;border-radius:50%}
 .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:8px;animation:pulse 2s infinite}
@@ -385,7 +397,8 @@ function initBoard(){
         if(cl.length)h+=`<span class="task-badge">☑${clD}/${cl.length}</span>`;
         h+=`</span></div></div>`;
       });
-      if(s.key==='done'&&st.length){h+=`<button class="add-btn" onclick="window._archiveAll()" style="border-color:var(--green-border);color:var(--green)">📦 Arkivér alle færdige</button>`}
+      if(s.key==='done'&&st.length){h+=`</div><button class="add-btn" onclick="window._archiveAll()" style="border-color:var(--green-border);color:var(--green)">📦 Arkivér alle færdige</button>`}
+      else{h+=`</div>`}
       h+=`<button class="add-btn" onclick="window._newTask('${s.key}')">+ Ny opgave</button></div>`;
     });
     board.innerHTML=h;
