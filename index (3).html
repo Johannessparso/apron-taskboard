@@ -189,29 +189,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .cl-add input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)}
 .cl-add input:focus{outline:none;border-color:var(--blue)}
 .cl-add button{padding:6px 12px;border-radius:6px;border:none;background:var(--blue);color:#000;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
-/* Attachments */
-.att-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
-.att-title{font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em}
-.att-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface3);border-radius:6px;margin-bottom:6px;font-size:12px}
-.att-item a{color:var(--blue);text-decoration:none;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.att-item a:hover{text-decoration:underline}
-.att-item .att-size{color:var(--text-dim);font-size:10px;flex-shrink:0}
-.att-item .att-rm{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:2px 4px}
-.att-item .att-rm:hover{color:var(--red)}
-.att-btns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
-.att-btns button,.att-btns label{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);font-family:inherit;font-size:11px;font-weight:600;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s}
-.att-btns button:hover,.att-btns label:hover{border-color:var(--blue);color:var(--blue)}
-.att-btns input[type="file"]{display:none}
-.link-row{display:none;gap:6px;margin-top:6px}
-.link-row.show{display:flex}
-.link-row input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)}
-.link-row input:focus{outline:none;border-color:var(--blue)}
-.link-row button{padding:6px 12px;border-radius:6px;border:none;background:var(--blue);color:#000;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
-.upload-prog{margin-top:6px;display:none}
-.upload-prog.show{display:block}
-.upload-prog .ubar{height:4px;border-radius:2px;background:var(--surface3);overflow:hidden}
-.upload-prog .ufill{height:100%;background:var(--blue);border-radius:2px;transition:width .2s}
-.upload-prog .ulbl{font-size:10px;color:var(--text-dim);margin-top:3px}
 /* Escalation info in modal */
 .esc-info{background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .esc-info .esc-icon{font-size:16px}
@@ -245,12 +222,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
 
 <script>
 const firebaseConfig={apiKey:"AIzaSyCseu1ZG-FcKQQcWzSzFuMC-S7jrN-KZBU",authDomain:"apron-taskboard.firebaseapp.com",databaseURL:"https://apron-taskboard-default-rtdb.europe-west1.firebasedatabase.app",projectId:"apron-taskboard",storageBucket:"apron-taskboard.firebasestorage.app",messagingSenderId:"791908822417",appId:"1:791908822417:web:3ee29a6d139ab745f63e30"};
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database(),tasksRef=db.ref('tasks'),metaRef=db.ref('meta'),storage=firebase.storage();
+const db=firebase.database(),tasksRef=db.ref('tasks'),metaRef=db.ref('meta');
 const USERS=['Johannes','Helmer','Daniel'];
 const AV={Johannes:{cls:'av-j',ini:'JS',color:'#3b82f6'},Helmer:{cls:'av-h',ini:'HE',color:'#10b981'},Daniel:{cls:'av-d',ini:'DL',color:'#8b5cf6'}};
 const ST=[{key:'todo',label:'To Do',dot:'var(--blue)',cls:'todo'},{key:'in-progress',label:'I gang',dot:'var(--amber)',cls:'prog'},{key:'done',label:'Færdig',dot:'var(--green)',cls:'done'}];
@@ -306,9 +283,9 @@ function initBoard(){
 
   function seedTasks(){
     const seed=[
-      {title:'Vagtskema april — færdiggør weekend-rotation',desc:'Gruppe A/B weekend-fordeling mangler balancering.',assignees:['Johannes'],createdBy:'Daniel',priority:'high',status:'in-progress',deadline:'2026-03-20',comments:[],checklist:[{text:'Skriv plan for gruppe A',done:false},{text:'Skriv plan for gruppe B',done:false}],attachments:[]},
-      {title:'Rekruttering — 4 nye ramp agents',desc:'Vi mangler 4 agenter til sommer.',assignees:['Helmer'],createdBy:'Daniel',priority:'high',status:'in-progress',deadline:'2026-03-15',comments:[],checklist:[],attachments:[]},
-      {title:'LH2446 complaint — send svar til Andrea',desc:'Ground crew contact failure. Headset task uassigned i RTP.',assignees:[],createdBy:'Daniel',priority:'high',status:'todo',deadline:'2026-03-14',comments:[],checklist:[],attachments:[]},
+      {title:'Vagtskema april — færdiggør weekend-rotation',desc:'Gruppe A/B weekend-fordeling mangler balancering.',assignees:['Johannes'],createdBy:'Daniel',priority:'high',status:'in-progress',deadline:'2026-03-20',comments:[],checklist:[{text:'Skriv plan for gruppe A',done:false},{text:'Skriv plan for gruppe B',done:false}]},
+      {title:'Rekruttering — 4 nye ramp agents',desc:'Vi mangler 4 agenter til sommer.',assignees:['Helmer'],createdBy:'Daniel',priority:'high',status:'in-progress',deadline:'2026-03-15',comments:[],checklist:[]},
+      {title:'LH2446 complaint — send svar til Andrea',desc:'Ground crew contact failure. Headset task uassigned i RTP.',assignees:[],createdBy:'Daniel',priority:'high',status:'todo',deadline:'2026-03-14',comments:[],checklist:[]},
     ];
     seed.forEach(t=>tasksRef.push(t));
   }
@@ -368,7 +345,7 @@ function initBoard(){
         const pc=dp==='high'?'pri-high':dp==='medium'?'pri-medium':'pri-low';
         const pl=dp==='high'?'Høj':dp==='medium'?'Medium':'Lav';
         const di=dlInfo(t.deadline,t.status);
-        const cl=t.checklist||[],att=t.attachments||[],cmts=t.comments||[];
+        const cl=t.checklist||[],cmts=t.comments||[];
         const clD=cl.filter(c=>c.done).length;
         h+=`<div class="task-card${uc?' unclaimed':''}${esc.esc?' escalated':''}" onclick="window._openTask('${t._key}')">
           <div class="task-top"><span class="task-title">${esc.esc?`<span class="esc-badge">⚠ ${esc.lbl}</span> `:''}${esc2(t.title)}</span><span class="task-priority ${pc}">${pl}</span></div>
@@ -384,7 +361,6 @@ function initBoard(){
         h+=`<span class="task-badges">`;
         if(cmts.length)h+=`<span class="task-badge">💬${cmts.length}</span>`;
         if(cl.length)h+=`<span class="task-badge">☑${clD}/${cl.length}</span>`;
-        if(att.length)h+=`<span class="task-badge">📎${att.length}</span>`;
         h+=`</span></div></div>`;
       });
       h+=`</div><button class="add-btn" onclick="window._newTask('${s.key}')">+ Ny opgave</button></div>`;
@@ -433,10 +409,10 @@ function initBoard(){
     const a=t.assignees||[];if(!a.includes(cUser)){a.push(cUser);t.assignees=a;
     const c=t.comments||[];c.push({user:cUser,text:'Jeg tager denne opgave.',time:timeStr(),system:true});t.comments=c;fbSave(t)}
   };
-  window._newTask=function(status){editTask={_key:null,title:'',desc:'',assignees:[],createdBy:cUser,priority:'medium',status,deadline:'',comments:[],checklist:[],attachments:[]};renderModal()};
+  window._newTask=function(status){editTask={_key:null,title:'',desc:'',assignees:[],createdBy:cUser,priority:'medium',status,deadline:'',comments:[],checklist:[]};renderModal()};
   window._openTask=function(key){
     const t=tasks.find(x=>x._key===key);if(!t)return;
-    editTask={...t,assignees:[...(t.assignees||[])],comments:[...(t.comments||[])],checklist:[...(t.checklist||[]).map(c=>({...c}))],attachments:[...(t.attachments||[]).map(a=>({...a}))]};
+    editTask={...t,assignees:[...(t.assignees||[])],comments:[...(t.comments||[])],checklist:[...(t.checklist||[]).map(c=>({...c}))]};
     renderModal();
   };
 
@@ -475,19 +451,6 @@ function initBoard(){
       clH+=`<div class="cl-add"><input type="text" id="clInput" placeholder="Tilføj punkt..." onkeydown="if(event.key==='Enter')window._addCl()"><button onclick="window._addCl()">+</button></div></div>`;
     }
 
-    // Attachments
-    const att=t.attachments||[];let atH='';
-    if(!isNew){
-      atH=`<div class="att-section"><div class="att-title">📎 Vedhæftninger (${att.length})</div>`;
-      att.forEach((a,i)=>{
-        const icon=a.type==='link'?'🔗':a.type==='image'?'🖼':'📄';
-        atH+=`<div class="att-item"><span>${icon}</span><a href="${esc2(a.url)}" target="_blank">${esc2(a.name)}</a>${a.size?`<span class="att-size">${a.size}</span>`:''}<button class="att-rm" onclick="window._delAtt(${i})">×</button></div>`;
-      });
-      atH+=`<div class="upload-prog" id="upProg"><div class="ubar"><div class="ufill" id="upFill" style="width:0%"></div></div><div class="ulbl" id="upLbl">Uploader...</div></div>`;
-      atH+=`<div class="att-btns"><label>📄 Upload fil<input type="file" onchange="window._uploadFile(this)"></label><button onclick="window._showLink()">🔗 Tilføj link</button></div>`;
-      atH+=`<div class="link-row" id="linkRow"><input type="text" id="linkUrl" placeholder="https://..."><input type="text" id="linkName" placeholder="Navn" style="max-width:100px"><button onclick="window._addLink()">Tilføj</button></div></div>`;
-    }
-
     let mvH='';
     if(!isNew){mvH=`<div class="move-btns">${ST.map(s=>`<button class="move-btn${s.key===t.status?' cur':''}" onclick="window._moveTask('${s.key}')">${s.key===t.status?'● ':''}${s.label}</button>`).join('')}</div>`}
 
@@ -498,7 +461,7 @@ function initBoard(){
       <div class="field"><label>Beskrivelse</label><textarea id="tDesc" placeholder="Tilføj detaljer...">${esc2(t.desc||'')}</textarea></div>
       ${aH}
       <div class="field-row"><div class="field"><label>Prioritet</label><select id="tPri"><option value="high"${t.priority==='high'?' selected':''}>Høj</option><option value="medium"${t.priority==='medium'?' selected':''}>Medium</option><option value="low"${t.priority==='low'?' selected':''}>Lav</option></select></div><div class="field"><label>Deadline</label><input type="date" id="tDl" value="${t.deadline||''}"></div></div>
-      ${mvH}${clH}${atH}${cH}
+      ${mvH}${clH}${cH}
       <div class="btn-row">${!isNew?`<button class="btn btn-danger" onclick="window._delTask()" style="margin-right:auto">Slet</button>`:''}<button class="btn btn-secondary" onclick="window._closeModal()">Annuller</button><button class="btn btn-primary" onclick="window._saveTask()">${isNew?'Opret':'Gem'}</button></div>
     </div></div>`;
     document.body.appendChild(ov);
@@ -525,7 +488,7 @@ function initBoard(){
 
   window._saveTask=function(){
     const ti=document.getElementById('tTitle').value.trim();if(!ti)return;
-    const data={title:ti,desc:document.getElementById('tDesc').value.trim(),priority:document.getElementById('tPri').value,deadline:document.getElementById('tDl').value,assignees:[...(editTask.assignees||[])],comments:editTask.comments||[],checklist:editTask.checklist||[],attachments:editTask.attachments||[],status:editTask.status,createdBy:editTask.createdBy||cUser};
+    const data={title:ti,desc:document.getElementById('tDesc').value.trim(),priority:document.getElementById('tPri').value,deadline:document.getElementById('tDl').value,assignees:[...(editTask.assignees||[])],comments:editTask.comments||[],checklist:editTask.checklist||[],status:editTask.status,createdBy:editTask.createdBy||cUser};
     if(editTask._key)data._key=editTask._key;
     fbSave(data);closeModal();
   };
@@ -610,61 +573,6 @@ function initBoard(){
     editTask.checklist=[...cl.map(c=>({...c}))];closeModal();window._openTask(editTask._key);
   };
 
-  // ── Attachments ──
-  window._showLink=function(){document.getElementById('linkRow').classList.toggle('show')};
-  window._addLink=function(){
-    let url=document.getElementById('linkUrl').value.trim();if(!url)return;
-    if(!url.startsWith('http'))url='https://'+url;
-    const name=document.getElementById('linkName').value.trim()||url.replace(/^https?:\/\//,'').substring(0,40);
-    const att={type:'link',name,url,size:''};
-    if(editTask._key){
-      const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
-      t.attachments=t.attachments||[];t.attachments.push(att);fbSave(t);
-      editTask.attachments=[...t.attachments.map(a=>({...a}))];closeModal();window._openTask(editTask._key);
-    }else{
-      editTask.attachments=editTask.attachments||[];editTask.attachments.push(att);closeModal();renderModal();
-    }
-  };
-  window._delAtt=function(i){
-    if(!editTask)return;
-    // If it's a file in storage, delete it
-    const att=editTask.attachments||[];
-    const item=att[i];
-    if(item&&item.storagePath){
-      storage.ref(item.storagePath).delete().catch(()=>{});
-    }
-    if(editTask._key){
-      const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
-      const a=t.attachments||[];a.splice(i,1);t.attachments=a;fbSave(t);
-      editTask.attachments=[...a.map(x=>({...x}))];closeModal();window._openTask(editTask._key);
-    }else{
-      att.splice(i,1);closeModal();renderModal();
-    }
-  };
-  window._uploadFile=function(input){
-    const file=input.files[0];if(!file)return;
-    if(!editTask||!editTask._key){alert('Gem opgaven først, derefter upload filer.');return}
-    const prog=document.getElementById('upProg'),fill=document.getElementById('upFill'),lbl=document.getElementById('upLbl');
-    prog.classList.add('show');lbl.textContent='Uploader...';fill.style.width='0%';
-    const path=`attachments/${editTask._key}/${Date.now()}_${file.name}`;
-    const ref=storage.ref(path);
-    const uploadTask=ref.put(file);
-    uploadTask.on('state_changed',
-      snap=>{const pct=Math.round((snap.bytesTransferred/snap.totalBytes)*100);fill.style.width=pct+'%';lbl.textContent=`${pct}% — ${file.name}`},
-      err=>{lbl.textContent='Fejl: '+err.message;setTimeout(()=>prog.classList.remove('show'),3000)},
-      ()=>{
-        uploadTask.snapshot.ref.getDownloadURL().then(url=>{
-          const sz=file.size>1048576?(file.size/1048576).toFixed(1)+'MB':(file.size/1024).toFixed(0)+'KB';
-          const isImg=/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name);
-          const att={type:isImg?'image':'file',name:file.name,url,size:sz,storagePath:path};
-          const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
-          t.attachments=t.attachments||[];t.attachments.push(att);fbSave(t);
-          editTask.attachments=[...t.attachments.map(a=>({...a}))];
-          prog.classList.remove('show');closeModal();window._openTask(editTask._key);
-        });
-      }
-    );
-  };
 }
 
 // ── Utilities ──
