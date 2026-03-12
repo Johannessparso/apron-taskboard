@@ -53,7 +53,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .prog-stat-lbl{font-size:11px;color:var(--text-dim)}
 .board{display:flex;gap:14px;padding:18px 24px;overflow-x:auto;min-height:calc(100vh - 180px)}
 @media(max-width:900px){.board{flex-direction:column}}
-.col{min-width:310px;max-width:350px;flex:1;display:flex;flex-direction:column;background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:background .3s}
+.col{min-width:280px;flex:1;display:flex;flex-direction:column;background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:background .3s}
 @media(max-width:900px){.col{min-width:auto;max-width:none}}
 .col-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
 .col-head.todo{background:linear-gradient(135deg,rgba(106,176,255,.06),transparent)}
@@ -189,6 +189,21 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .cl-add input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)}
 .cl-add input:focus{outline:none;border-color:var(--blue)}
 .cl-add button{padding:6px 12px;border-radius:6px;border:none;background:var(--blue);color:#000;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+/* Archive */
+.archive-bar{background:var(--surface);border-top:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s}
+.archive-bar:hover{background:var(--surface2)}
+.archive-bar-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-mid)}
+.archive-bar-left span.archive-count{font-family:'JetBrains Mono',monospace;background:var(--surface3);padding:2px 8px;border-radius:8px;font-size:11px}
+.archive-bar-arrow{font-size:14px;color:var(--text-dim);transition:transform .2s}
+.archive-bar-arrow.open{transform:rotate(180deg)}
+.archive-list{background:var(--surface);border-top:1px solid var(--border);padding:0 24px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s}
+.archive-list.open{max-height:600px;overflow-y:auto;padding:12px 24px}
+.archive-grid{display:flex;flex-wrap:wrap;gap:8px}
+.archive-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;width:calc(33.33% - 6px);min-width:240px;opacity:.7}
+.archive-card:hover{opacity:1;border-color:var(--border-light);transform:translateY(-1px)}
+.archive-card .ac-title{font-size:12px;font-weight:600;margin-bottom:4px}
+.archive-card .ac-meta{font-size:10px;color:var(--text-dim);display:flex;gap:8px}
+@media(max-width:900px){.archive-card{width:100%}}
 /* Escalation info in modal */
 .esc-info{background:var(--red-bg);border:1px solid var(--red-border);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .esc-info .esc-icon{font-size:16px}
@@ -219,6 +234,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div class="progress-strip" id="progStrip"></div>
 <div class="board" id="board"><div class="loading-screen"><div class="spinner"></div><span style="color:var(--text-dim);font-size:13px">Forbinder...</span></div></div>
 <div class="week-view" id="weekView"></div>
+<div id="archiveWrap" style="display:none">
+  <div class="archive-bar" onclick="window._toggleArchive()"><span class="archive-bar-left">📦 Arkiv <span class="archive-count" id="archiveCount">0</span></span><span class="archive-bar-arrow" id="archiveArrow">▼</span></div>
+  <div class="archive-list" id="archiveList"></div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -305,18 +324,21 @@ function initBoard(){
   function dispPri(task){const e=checkEsc(task);if(!e.esc)return task.priority;if(e.orig==='low')return'medium';return'high'}
 
   // ── Render ──
-  function render(){renderProgress();renderBoard();if(curView==='week')_renderWeek()}
+  function render(){renderProgress();renderBoard();renderArchive();if(curView==='week')_renderWeek()}
 
   function renderProgress(){
-    const todo=tasks.filter(t=>t.status==='todo').length,prog=tasks.filter(t=>t.status==='in-progress').length,done=tasks.filter(t=>t.status==='done').length;
-    const unc=tasks.filter(t=>(!t.assignees||!t.assignees.length)&&t.status!=='done').length;
-    const escN=tasks.filter(t=>t.status!=='done'&&checkEsc(t).esc).length;
+    const todo=tasks.filter(t=>t.status==='todo').length,prog=tasks.filter(t=>t.status==='in-progress').length;
+    const done=tasks.filter(t=>t.status==='done'&&!t.archived).length;
+    const arch=tasks.filter(t=>t.archived).length;
+    const unc=tasks.filter(t=>(!t.assignees||!t.assignees.length)&&t.status!=='done'&&!t.archived).length;
+    const escN=tasks.filter(t=>t.status!=='done'&&!t.archived&&checkEsc(t).esc).length;
     document.getElementById('progStrip').innerHTML=`<div class="prog-stats">
       <div class="prog-stat"><div class="prog-stat-val" style="color:var(--blue)">${todo}</div><div class="prog-stat-lbl">To Do</div></div>
       <div class="prog-stat"><div class="prog-stat-val" style="color:var(--amber)">${prog}</div><div class="prog-stat-lbl">I gang</div></div>
       <div class="prog-stat"><div class="prog-stat-val" style="color:var(--green)">${done}</div><div class="prog-stat-lbl">Færdig</div></div>
       ${unc?`<div class="prog-stat"><div class="prog-stat-val" style="color:var(--purple)">${unc}</div><div class="prog-stat-lbl">Unclaimed</div></div>`:''}
       ${escN?`<div class="prog-stat"><div class="prog-stat-val" style="color:var(--red)">${escN}</div><div class="prog-stat-lbl">Eskaleret</div></div>`:''}
+      ${arch?`<div class="prog-stat"><div class="prog-stat-val" style="color:var(--text-dim)">${arch}</div><div class="prog-stat-lbl">Arkiveret</div></div>`:''}
     </div>`;
   }
 
@@ -332,7 +354,7 @@ function initBoard(){
   function renderBoard(){
     const board=document.getElementById('board');let h='';
     ST.forEach(s=>{
-      const st=tasks.filter(t=>t.status===s.key).sort((a,b)=>{
+      const st=tasks.filter(t=>t.status===s.key&&!t.archived).sort((a,b)=>{
         const ua=(a.assignees||[]).length===0?0:1,ub=(b.assignees||[]).length===0?0:1;
         if(ua!==ub)return ua-ub;
         return({high:0,medium:1,low:2}[dispPri(a)]||1)-({high:0,medium:1,low:2}[dispPri(b)]||1);
@@ -363,10 +385,60 @@ function initBoard(){
         if(cl.length)h+=`<span class="task-badge">☑${clD}/${cl.length}</span>`;
         h+=`</span></div></div>`;
       });
-      h+=`</div><button class="add-btn" onclick="window._newTask('${s.key}')">+ Ny opgave</button></div>`;
+      if(s.key==='done'&&st.length){h+=`<button class="add-btn" onclick="window._archiveAll()" style="border-color:var(--green-border);color:var(--green)">📦 Arkivér alle færdige</button>`}
+      h+=`<button class="add-btn" onclick="window._newTask('${s.key}')">+ Ny opgave</button></div>`;
     });
     board.innerHTML=h;
   }
+
+  // ── Archive ──
+  let archiveOpen=false;
+  function renderArchive(){
+    const archived=tasks.filter(t=>t.archived);
+    const wrap=document.getElementById('archiveWrap');
+    if(!wrap)return;
+    wrap.style.display=archived.length?'block':'none';
+    document.getElementById('archiveCount').textContent=archived.length;
+    if(!archiveOpen)return;
+    const list=document.getElementById('archiveList');
+    let h='<div class="archive-grid">';
+    archived.sort((a,b)=>(b.archivedAt||0)-(a.archivedAt||0)).forEach(t=>{
+      const asgn=(t.assignees||[]).join(', ')||'Ingen';
+      h+=`<div class="archive-card" onclick="window._openTask('${t._key}')">
+        <div class="ac-title">${esc2(t.title)}</div>
+        <div class="ac-meta"><span>${asgn}</span>${t.deadline?`<span>${fmtDate(t.deadline)}</span>`:''}</div>
+      </div>`;
+    });
+    h+='</div>';
+    list.innerHTML=h;
+  }
+
+  window._toggleArchive=function(){
+    archiveOpen=!archiveOpen;
+    const list=document.getElementById('archiveList'),arrow=document.getElementById('archiveArrow');
+    list.classList.toggle('open',archiveOpen);
+    arrow.classList.toggle('open',archiveOpen);
+    if(archiveOpen)renderArchive();
+  };
+
+  window._archiveAll=function(){
+    const doneTasks=tasks.filter(t=>t.status==='done'&&!t.archived);
+    doneTasks.forEach(t=>{t.archived=true;t.archivedAt=Date.now();fbSave(t)});
+  };
+
+  window._archiveTask=function(key){
+    const t=tasks.find(x=>x._key===key);if(!t)return;
+    t.archived=true;t.archivedAt=Date.now();
+    const c=t.comments||[];c.push({user:cUser,text:'Opgave arkiveret.',time:timeStr(),system:true});t.comments=c;
+    fbSave(t);closeModal();
+  };
+
+  window._unarchiveTask=function(key){
+    const t=tasks.find(x=>x._key===key);if(!t)return;
+    t.archived=false;delete t.archivedAt;
+    const c=t.comments||[];c.push({user:cUser,text:'Opgave genåbnet fra arkiv.',time:timeStr(),system:true});t.comments=c;
+    fbSave(t);closeModal();
+  };
 
   // ── Week View ──
   window._renderWeek=_renderWeek;
@@ -441,15 +513,13 @@ function initBoard(){
       cH+=`<div class="comment-input-wrap"><div class="mention-dropdown" id="mentionDrop"></div><div class="comment-input"><input type="text" id="cInput" placeholder="Skriv en kommentar... (@ for mentions)" onkeydown="window._cKey(event)" oninput="window._cInput(event)"><button onclick="window._addComment()">Send</button></div></div></div>`;
     }
 
-    // Checklist
+    // Checklist (works for both new and existing tasks)
     const cl=t.checklist||[];let clH='';
-    if(!isNew){
-      const clD=cl.filter(c=>c.done).length,pct=cl.length?Math.round(clD/cl.length*100):0;
-      clH=`<div class="checklist-section"><div class="cl-header"><span>☑ Tjekliste</span><span class="cl-progress">${clD}/${cl.length}</span></div>`;
-      if(cl.length)clH+=`<div class="cl-bar"><div class="cl-bar-fill" style="width:${pct}%"></div></div>`;
-      cl.forEach((c,i)=>{clH+=`<div class="cl-item${c.done?' done':''}"><input type="checkbox" ${c.done?'checked':''} onchange="window._togCl(${i})"><span>${esc2(c.text)}</span><button onclick="window._delCl(${i})">×</button></div>`});
-      clH+=`<div class="cl-add"><input type="text" id="clInput" placeholder="Tilføj punkt..." onkeydown="if(event.key==='Enter')window._addCl()"><button onclick="window._addCl()">+</button></div></div>`;
-    }
+    const clD=cl.filter(c=>c.done).length,pct=cl.length?Math.round(clD/cl.length*100):0;
+    clH=`<div class="checklist-section"><div class="cl-header"><span>☑ Tjekliste</span><span class="cl-progress">${clD}/${cl.length}</span></div>`;
+    if(cl.length)clH+=`<div class="cl-bar"><div class="cl-bar-fill" style="width:${pct}%"></div></div>`;
+    cl.forEach((c,i)=>{clH+=`<div class="cl-item${c.done?' done':''}"><input type="checkbox" ${c.done?'checked':''} onchange="window._togCl(${i})"><span>${esc2(c.text)}</span><button onclick="window._delCl(${i})">×</button></div>`});
+    clH+=`<div class="cl-add"><input type="text" id="clInput" placeholder="Tilføj punkt..." onkeydown="if(event.key==='Enter')window._addCl()"><button onclick="window._addCl()">+</button></div></div>`;
 
     let mvH='';
     if(!isNew){mvH=`<div class="move-btns">${ST.map(s=>`<button class="move-btn${s.key===t.status?' cur':''}" onclick="window._moveTask('${s.key}')">${s.key===t.status?'● ':''}${s.label}</button>`).join('')}</div>`}
@@ -462,7 +532,7 @@ function initBoard(){
       ${aH}
       <div class="field-row"><div class="field"><label>Prioritet</label><select id="tPri"><option value="high"${t.priority==='high'?' selected':''}>Høj</option><option value="medium"${t.priority==='medium'?' selected':''}>Medium</option><option value="low"${t.priority==='low'?' selected':''}>Lav</option></select></div><div class="field"><label>Deadline</label><input type="date" id="tDl" value="${t.deadline||''}"></div></div>
       ${mvH}${clH}${cH}
-      <div class="btn-row">${!isNew?`<button class="btn btn-danger" onclick="window._delTask()" style="margin-right:auto">Slet</button>`:''}<button class="btn btn-secondary" onclick="window._closeModal()">Annuller</button><button class="btn btn-primary" onclick="window._saveTask()">${isNew?'Opret':'Gem'}</button></div>
+      <div class="btn-row">${!isNew?`<button class="btn btn-danger" onclick="window._delTask()" style="margin-right:auto">Slet</button>`:''}${!isNew&&t.archived?`<button class="btn btn-secondary" onclick="window._unarchiveTask('${t._key}')" style="margin-right:auto">↩ Genåbn</button>`:''}${!isNew&&t.status==='done'&&!t.archived?`<button class="btn btn-secondary" onclick="window._archiveTask('${t._key}')">📦 Arkivér</button>`:''}<button class="btn btn-secondary" onclick="window._closeModal()">Annuller</button><button class="btn btn-primary" onclick="window._saveTask()">${isNew?'Opret':'Gem'}</button></div>
     </div></div>`;
     document.body.appendChild(ov);
   }
@@ -549,29 +619,38 @@ function initBoard(){
   };
 
   // ── Checklist ──
+  function refreshChecklist(){
+    const cl=editTask.checklist||[];
+    const clD=cl.filter(c=>c.done).length,pct=cl.length?Math.round(clD/cl.length*100):0;
+    const section=document.querySelector('.checklist-section');
+    if(!section)return;
+    let h=`<div class="cl-header"><span>☑ Tjekliste</span><span class="cl-progress">${clD}/${cl.length}</span></div>`;
+    if(cl.length)h+=`<div class="cl-bar"><div class="cl-bar-fill" style="width:${pct}%"></div></div>`;
+    cl.forEach((c,i)=>{h+=`<div class="cl-item${c.done?' done':''}"><input type="checkbox" ${c.done?'checked':''} onchange="window._togCl(${i})"><span>${esc2(c.text)}</span><button onclick="window._delCl(${i})">×</button></div>`});
+    h+=`<div class="cl-add"><input type="text" id="clInput" placeholder="Tilføj punkt..." onkeydown="if(event.key==='Enter')window._addCl()"><button onclick="window._addCl()">+</button></div>`;
+    section.innerHTML=h;
+    const inp=document.getElementById('clInput');if(inp)inp.focus();
+  }
+
   window._togCl=function(i){
-    if(!editTask||!editTask._key)return;
-    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
-    const cl=t.checklist||[];if(!cl[i])return;cl[i].done=!cl[i].done;t.checklist=cl;fbSave(t);
-    editTask.checklist=[...cl.map(c=>({...c}))];closeModal();window._openTask(editTask._key);
+    if(!editTask)return;
+    const cl=editTask.checklist||[];if(!cl[i])return;cl[i].done=!cl[i].done;
+    if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...cl.map(c=>({...c}))];fbSave(t)}}
+    refreshChecklist();
   };
   window._delCl=function(i){
-    if(!editTask||!editTask._key)return;
-    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
-    const cl=t.checklist||[];cl.splice(i,1);t.checklist=cl;fbSave(t);
-    editTask.checklist=[...cl.map(c=>({...c}))];closeModal();window._openTask(editTask._key);
+    if(!editTask)return;
+    const cl=editTask.checklist||[];cl.splice(i,1);
+    if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...cl.map(c=>({...c}))];fbSave(t)}}
+    refreshChecklist();
   };
   window._addCl=function(){
     const inp=document.getElementById('clInput'),txt=inp.value.trim();if(!txt)return;
-    if(!editTask||!editTask._key){
-      // New task: just add locally
-      editTask.checklist=editTask.checklist||[];editTask.checklist.push({text:txt,done:false});inp.value='';
-      closeModal();renderModal();return;
-    }
-    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
-    const cl=t.checklist||[];cl.push({text:txt,done:false});t.checklist=cl;fbSave(t);
-    editTask.checklist=[...cl.map(c=>({...c}))];closeModal();window._openTask(editTask._key);
+    editTask.checklist=editTask.checklist||[];editTask.checklist.push({text:txt,done:false});
+    if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...editTask.checklist.map(c=>({...c}))];fbSave(t)}}
+    refreshChecklist();
   };
+
 
 }
 
