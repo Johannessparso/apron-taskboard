@@ -386,7 +386,11 @@ function initBoard(){
     const i=a.indexOf(u);
     if(i>=0)a.splice(i,1);else if(a.length<2)a.push(u);
     editTask.assignees=a;
-    closeModal();renderModal();
+    // Update chips in-place without closing modal
+    document.querySelectorAll('.a-chip').forEach(chip=>{
+      const name=chip.textContent.trim();
+      if(a.includes(name)){chip.classList.add('selected')}else{chip.classList.remove('selected')}
+    });
   };
 
   window._claimModal=function(){
