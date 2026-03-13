@@ -338,6 +338,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .undo-toast .undo-timer{width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;flex-shrink:0}
 .undo-toast .undo-timer-fill{height:100%;background:var(--blue);border-radius:2px;animation:undoCountdown 5s linear forwards}
 @keyframes undoCountdown{from{width:100%}to{width:0%}}
+/* Task History */
+.history-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.history-title{font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:10px;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;gap:6px}
+.history-toggle{font-size:10px;transition:transform .2s;display:inline-block}
+.history-toggle.collapsed{transform:rotate(-90deg)}
+.history-list{padding-left:12px;border-left:2px solid var(--border)}
+.history-item{position:relative;padding:6px 0 6px 16px;font-size:11px;color:var(--text-mid);line-height:1.5}
+.history-item::before{content:'';position:absolute;left:-7px;top:10px;width:8px;height:8px;border-radius:50%;background:var(--surface3);border:2px solid var(--border)}
+.history-item .hi-time{font-size:9px;color:var(--text-dim)}
 </style>
 </head>
 <body>
@@ -454,6 +463,7 @@ function initBoard(){
 
   function fbSave(task){const key=task._key;const d={...task};delete d._key;if(key)tasksRef.child(key).set(d);else tasksRef.push(d)}
   function fbDelete(key){if(key)tasksRef.child(key).remove()}
+  function addHistory(task,action){task.history=task.history||[];task.history.push({action,user:cUser,time:timeStr(),ts:Date.now()})}
 
   // ── Priority Escalation ──
   function checkEsc(task){
@@ -480,6 +490,13 @@ function initBoard(){
     const greeting=hour<12?'God morgen':hour<18?'God eftermiddag':'God aften';
     wrap.innerHTML=`<div class="welcome-banner"><div><div class="welcome-text">${greeting}, <span class="welcome-name">${cUser}</span></div><div class="welcome-stats"><span class="ws-prog">${inProg} opgaver i gang</span>${overdue?`, <span class="ws-over">${overdue} overskredet deadline</span>`:''}, <span class="ws-wait">${waiting} venter på dig</span></div></div><button class="welcome-close" onclick="window._dismissWelcome()">✕</button></div>`;
   }
+  let histCollapsed=false;
+  window._toggleHistory=function(){
+    histCollapsed=!histCollapsed;
+    const list=document.getElementById('histList'),tog=document.getElementById('histToggle');
+    if(list)list.style.display=histCollapsed?'none':'block';
+    if(tog)tog.classList.toggle('collapsed',histCollapsed);
+  };
   window._dismissWelcome=function(){
     sessionStorage.setItem('atb-welcome-dismissed','1');
     const wrap=document.getElementById('welcomeWrap');if(wrap)wrap.innerHTML='';
@@ -599,6 +616,7 @@ function initBoard(){
         const oldStatus=t.status;
         const oldLabel=ST.find(x=>x.key===t.status)?.label||t.status;
         const newLabel=ST.find(x=>x.key===newStatus)?.label||newStatus;
+        addHistory(t,`flyttede fra ${oldLabel} til ${newLabel}`);
         t.status=newStatus;
         const c=t.comments||[];
         c.push({user:cUser,text:`Flyttet fra "${oldLabel}" til "${newLabel}".`,time:timeStr(),system:true});
@@ -609,7 +627,7 @@ function initBoard(){
         });
         fbSave(t);
         showUndo(`Opgave flyttet til ${newLabel}`,()=>{
-          t.status=oldStatus;t.comments.pop();fbSave(t);
+          t.status=oldStatus;t.comments.pop();t.history.pop();fbSave(t);
         });
       });
     });
@@ -703,12 +721,13 @@ function initBoard(){
   window._claimTask=function(key){
     const t=tasks.find(x=>x._key===key);if(!t)return;
     const a=t.assignees||[];if(!a.includes(cUser)){a.push(cUser);t.assignees=a;
+    addHistory(t,'tog opgaven');
     const c=t.comments||[];c.push({user:cUser,text:'Jeg tager denne opgave.',time:timeStr(),system:true});t.comments=c;fbSave(t)}
   };
   window._newTask=function(status){editTask={_key:null,title:'',desc:'',assignees:[],tags:[],createdBy:cUser,priority:'medium',status,deadline:'',comments:[],checklist:[]};renderModal()};
   window._openTask=function(key){
     const t=tasks.find(x=>x._key===key);if(!t)return;
-    editTask={...t,assignees:[...(t.assignees||[])],tags:[...(t.tags||[])],comments:[...(t.comments||[])],checklist:[...(t.checklist||[]).map(c=>({...c}))]};
+    editTask={...t,assignees:[...(t.assignees||[])],tags:[...(t.tags||[])],comments:[...(t.comments||[])],checklist:[...(t.checklist||[]).map(c=>({...c}))],history:[...(t.history||[])]};
     renderModal();
   };
 
@@ -753,6 +772,15 @@ function initBoard(){
           <div class="comment-text${c.system?' comment-system':''}" id="cmText${ci}">${renderMentions(esc2(c.text))}</div>${reactH}</div></div>`;
       });
       cH+=`<div class="comment-input-wrap"><div class="mention-dropdown" id="mentionDrop"></div><div class="comment-input"><input type="text" id="cInput" placeholder="Skriv en kommentar... (@ for mentions)" onkeydown="window._cKey(event)" oninput="window._cInput(event)"><button onclick="window._addComment()">Send</button></div></div></div>`;
+      // History timeline
+      const hist=t.history||[];
+      if(hist.length){
+        cH+=`<div class="history-section"><div class="history-title" onclick="window._toggleHistory()"><span class="history-toggle" id="histToggle">▼</span> Historik (${hist.length})</div><div class="history-list" id="histList">`;
+        hist.slice().reverse().forEach(h=>{
+          cH+=`<div class="history-item"><strong>${esc2(h.user)}</strong> ${esc2(h.action)} <span class="hi-time">${esc2(h.time)}</span></div>`;
+        });
+        cH+=`</div></div>`;
+      }
     }
 
     // Steps system
@@ -825,8 +853,20 @@ function initBoard(){
 
   window._saveTask=function(){
     const ti=document.getElementById('tTitle').value.trim();if(!ti)return;
-    const data={title:ti,desc:document.getElementById('tDesc').value.trim(),priority:document.getElementById('tPri').value,deadline:document.getElementById('tDl').value,assignees:[...(editTask.assignees||[])],tags:[...(editTask.tags||[])],comments:editTask.comments||[],checklist:editTask.checklist||[],status:editTask.status,createdBy:editTask.createdBy||cUser};
-    if(editTask._key)data._key=editTask._key;
+    const newPri=document.getElementById('tPri').value,newDl=document.getElementById('tDl').value;
+    const data={title:ti,desc:document.getElementById('tDesc').value.trim(),priority:newPri,deadline:newDl,assignees:[...(editTask.assignees||[])],tags:[...(editTask.tags||[])],comments:editTask.comments||[],checklist:editTask.checklist||[],status:editTask.status,createdBy:editTask.createdBy||cUser,history:editTask.history||[]};
+    if(editTask._key){
+      data._key=editTask._key;
+      const old=tasks.find(x=>x._key===editTask._key);
+      if(old){
+        if(old.priority!==newPri)addHistory(data,`ændrede prioritet fra ${old.priority} til ${newPri}`);
+        if(old.deadline!==newDl)addHistory(data,`ændrede deadline til ${newDl||'ingen'}`);
+        const oldA=(old.assignees||[]).join(','),newA=(editTask.assignees||[]).join(',');
+        if(oldA!==newA)addHistory(data,`ændrede ansvarlige til ${newA||'ingen'}`);
+      }
+    }else{
+      addHistory(data,'oprettede opgaven');
+    }
     fbSave(data);closeModal();
   };
   // ── Undo System ──
@@ -858,8 +898,9 @@ function initBoard(){
   window._moveTask=function(s){
     if(!editTask||!editTask._key)return;const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
     const oldStatus=t.status;const newLabel=ST.find(x=>x.key===s).label;
+    addHistory(t,`flyttede til ${newLabel}`);
     t.status=s;const c=t.comments||[];c.push({user:cUser,text:`Flyttet til "${newLabel}".`,time:timeStr(),system:true});t.comments=c;fbSave(t);closeModal();
-    showUndo(`Opgave flyttet til ${newLabel}`,()=>{t.status=oldStatus;t.comments.pop();fbSave(t)});
+    showUndo(`Opgave flyttet til ${newLabel}`,()=>{t.status=oldStatus;t.comments.pop();t.history.pop();fbSave(t)});
   };
 
   // ── @Mentions ──
