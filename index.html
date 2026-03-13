@@ -54,6 +54,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .toggle-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text-mid);transition:all .15s}
 .toggle-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.filter-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;font-family:inherit}
+.filter-btn:hover{border-color:var(--blue-border);color:var(--blue)}
+.filter-btn.active{border-color:var(--blue-border);background:var(--blue-bg);color:var(--blue)}
 .view-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .view-toggle button{padding:6px 12px;border:none;background:var(--surface2);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-dim);transition:all .15s}
 .view-toggle button.active{background:var(--blue-bg);color:var(--blue)}
@@ -307,6 +310,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div><div class="app-title">Apron Task Board</div><div class="app-sub">Apron Leadership — CPH</div></div>
 </div>
 <div class="topbar-right">
+<button class="filter-btn" id="myFilterBtn" onclick="window._toggleMyFilter()" style="display:none">👤 Mine</button>
 <div class="view-toggle" id="viewToggle" style="display:none">
   <button class="active" data-view="kanban" onclick="window._setView('kanban')">☰ Kanban</button>
   <button data-view="week" onclick="window._setView('week')">📅 Uge</button>
@@ -387,8 +391,9 @@ function initBoard(){
   document.getElementById('myDot').style.background=AV[cUser].color;
   document.getElementById('viewToggle').style.display='flex';
   document.getElementById('themeBtn').style.display='flex';
+  document.getElementById('myFilterBtn').style.display='flex';
 
-  let tasks=[],editTask=null,initialized=false,mentionIdx=-1;
+  let tasks=[],editTask=null,initialized=false,mentionIdx=-1,myFilter=false;
 
   tasksRef.on('value',snap=>{
     const data=snap.val();
@@ -450,10 +455,16 @@ function initBoard(){
     return{pct:35,color:'var(--green)',label:fmtDate(dl),cls:''};
   }
 
+  window._toggleMyFilter=function(){
+    myFilter=!myFilter;
+    document.getElementById('myFilterBtn').classList.toggle('active',myFilter);
+    render();
+  };
+
   function renderBoard(){
     const board=document.getElementById('board');let h='';
     ST.forEach(s=>{
-      const st=tasks.filter(t=>t.status===s.key&&!t.archived).sort((a,b)=>{
+      const st=tasks.filter(t=>t.status===s.key&&!t.archived&&(!myFilter||(t.assignees||[]).includes(cUser))).sort((a,b)=>{
         const ua=(a.assignees||[]).length===0?0:1,ub=(b.assignees||[]).length===0?0:1;
         if(ua!==ub)return ua-ub;
         return({high:0,medium:1,low:2}[dispPri(a)]||1)-({high:0,medium:1,low:2}[dispPri(b)]||1);
