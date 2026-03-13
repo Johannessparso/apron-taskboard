@@ -331,6 +331,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .welcome-stats .ws-wait{color:var(--purple)}
 .welcome-close{background:none;border:none;font-size:18px;color:var(--text-dim);cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s;flex-shrink:0}
 .welcome-close:hover{color:var(--text);background:var(--surface3)}
+/* Undo Toast */
+.undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:200;animation:slideUp .25s cubic-bezier(.16,1,.3,1);font-size:13px;font-weight:600;color:var(--text)}
+.undo-toast .undo-btn{background:var(--blue);color:#000;border:none;padding:6px 14px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.undo-toast .undo-btn:hover{background:#79b8ff}
+.undo-toast .undo-timer{width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;flex-shrink:0}
+.undo-toast .undo-timer-fill{height:100%;background:var(--blue);border-radius:2px;animation:undoCountdown 5s linear forwards}
+@keyframes undoCountdown{from{width:100%}to{width:0%}}
 </style>
 </head>
 <body>
@@ -589,6 +596,7 @@ function initBoard(){
         if(!key||!newStatus)return;
         const t=tasks.find(x=>x._key===key);
         if(!t||t.status===newStatus)return;
+        const oldStatus=t.status;
         const oldLabel=ST.find(x=>x.key===t.status)?.label||t.status;
         const newLabel=ST.find(x=>x.key===newStatus)?.label||newStatus;
         t.status=newStatus;
@@ -600,6 +608,9 @@ function initBoard(){
           pushFeedEvent(u,'move',`<strong>${cUser}</strong> flyttede til <strong>${newLabel}</strong>`,t._key,t.title);
         });
         fbSave(t);
+        showUndo(`Opgave flyttet til ${newLabel}`,()=>{
+          t.status=oldStatus;t.comments.pop();fbSave(t);
+        });
       });
     });
   }
@@ -818,10 +829,37 @@ function initBoard(){
     if(editTask._key)data._key=editTask._key;
     fbSave(data);closeModal();
   };
-  window._delTask=function(){if(editTask&&editTask._key){fbDelete(editTask._key);closeModal()}};
+  // ── Undo System ──
+  let undoTimer=null,undoAction=null;
+  function showUndo(msg,onUndo){
+    clearTimeout(undoTimer);
+    const existing=document.querySelector('.undo-toast');if(existing)existing.remove();
+    if(undoAction)undoAction=null;
+    undoAction=onUndo;
+    const toast=document.createElement('div');toast.className='undo-toast';
+    toast.innerHTML=`<span>${esc2(msg)}</span><button class="undo-btn" onclick="window._undoAction()">Fortryd</button><div class="undo-timer"><div class="undo-timer-fill"></div></div>`;
+    document.body.appendChild(toast);
+    undoTimer=setTimeout(()=>{toast.remove();undoAction=null},5000);
+  }
+  window._undoAction=function(){
+    clearTimeout(undoTimer);
+    const toast=document.querySelector('.undo-toast');if(toast)toast.remove();
+    if(undoAction){undoAction();undoAction=null}
+  };
+
+  window._delTask=function(){
+    if(!editTask||!editTask._key)return;
+    const key=editTask._key;
+    const snapshot={...editTask,checklist:[...(editTask.checklist||[]).map(c=>({...c}))],comments:[...(editTask.comments||[])],assignees:[...(editTask.assignees||[])],tags:[...(editTask.tags||[])]};
+    delete snapshot._key;
+    fbDelete(key);closeModal();
+    showUndo('Opgave slettet',()=>{tasksRef.child(key).set(snapshot)});
+  };
   window._moveTask=function(s){
     if(!editTask||!editTask._key)return;const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
-    t.status=s;const c=t.comments||[];c.push({user:cUser,text:`Flyttet til "${ST.find(x=>x.key===s).label}".`,time:timeStr(),system:true});t.comments=c;fbSave(t);closeModal();
+    const oldStatus=t.status;const newLabel=ST.find(x=>x.key===s).label;
+    t.status=s;const c=t.comments||[];c.push({user:cUser,text:`Flyttet til "${newLabel}".`,time:timeStr(),system:true});t.comments=c;fbSave(t);closeModal();
+    showUndo(`Opgave flyttet til ${newLabel}`,()=>{t.status=oldStatus;t.comments.pop();fbSave(t)});
   };
 
   // ── @Mentions ──
