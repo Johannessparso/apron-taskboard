@@ -242,23 +242,35 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .mention-dropdown.show{display:block}
 .mention-opt{padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s}
 .mention-opt:hover,.mention-opt.active{background:var(--blue-bg);color:var(--blue)}
-/* Checklist */
-.checklist-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
-.cl-header{font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em;display:flex;align-items:center;justify-content:space-between}
-.cl-progress{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-mid)}
-.cl-bar{height:3px;background:var(--surface3);border-radius:2px;margin-bottom:8px;overflow:hidden}
-.cl-bar-fill{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
-.cl-item{display:flex;align-items:center;gap:8px;padding:5px 0}
-.cl-item input[type="checkbox"]{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0}
-.cl-item span{font-size:12px;flex:1}
-.cl-item.done span{text-decoration:line-through;color:var(--text-dim)}
-.cl-item button{background:none;border:none;font-size:14px;color:var(--text-dim);cursor:pointer;padding:2px 4px;border-radius:4px;opacity:0;transition:opacity .15s}
-.cl-item:hover button{opacity:1}
-.cl-item button:hover{color:var(--red);background:var(--red-bg)}
-.cl-add{display:flex;gap:6px;margin-top:6px}
-.cl-add input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)}
-.cl-add input:focus{outline:none;border-color:var(--blue)}
-.cl-add button{padding:6px 12px;border-radius:6px;border:none;background:var(--blue);color:#000;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+/* Steps */
+.steps-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.steps-header{font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.steps-header .steps-toggle{font-size:12px;transition:transform .2s;display:inline-block}
+.steps-header .steps-toggle.collapsed{transform:rotate(-90deg)}
+.steps-progress{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-mid)}
+.steps-bar{height:4px;background:var(--surface3);border-radius:2px;margin-bottom:8px;overflow:hidden;display:flex}
+.steps-bar-prog{height:100%;background:var(--amber);transition:width .3s}
+.steps-bar-done{height:100%;background:var(--green);transition:width .3s}
+.steps-body{overflow:hidden;transition:max-height .3s}
+.step-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px}
+.step-top{display:flex;align-items:center;gap:8px}
+.step-title{font-size:12px;font-weight:600;flex:1}
+.step-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;cursor:pointer;border:none;font-family:inherit}
+.step-status.ss-not{background:var(--surface3);color:var(--text-dim)}
+.step-status.ss-prog{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.step-status.ss-done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.step-assignee{font-size:10px;color:var(--text-mid);margin-top:4px;display:flex;align-items:center;gap:4px}
+.step-notes{font-size:11px;color:var(--text-dim);margin-top:4px;line-height:1.4}
+.step-del{background:none;border:none;font-size:14px;color:var(--text-dim);cursor:pointer;padding:2px 4px;border-radius:4px;opacity:0;transition:opacity .15s;flex-shrink:0}
+.step-item:hover .step-del{opacity:1}
+.step-del:hover{color:var(--red);background:var(--red-bg)}
+.step-add{display:flex;gap:6px;margin-top:6px}
+.step-add input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)}
+.step-add input:focus{outline:none;border-color:var(--blue)}
+.step-add button{padding:6px 12px;border-radius:6px;border:none;background:var(--blue);color:#000;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.step-edit-row{display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap}
+.step-edit-row select,.step-edit-row input{padding:4px 8px;border-radius:6px;border:1px solid var(--border);font-family:inherit;font-size:11px;background:var(--surface2);color:var(--text)}
+.step-edit-row select:focus,.step-edit-row input:focus{outline:none;border-color:var(--blue)}
 /* Archive */
 .archive-bar{background:var(--surface);border-top:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s}
 .archive-bar:hover{background:var(--surface2)}
@@ -486,7 +498,8 @@ function initBoard(){
         const pl=dp==='high'?'Høj':dp==='medium'?'Medium':'Lav';
         const di=dlInfo(t.deadline,t.status);
         const cl=t.checklist||[],cmts=t.comments||[];
-        const clD=cl.filter(c=>c.done).length;
+        const clD=cl.filter(c=>c.stepStatus==='done'||c.done).length;
+        const clP=cl.filter(c=>c.stepStatus==='in_progress').length;
         h+=`<div class="task-card${uc?' unclaimed':''}${esc.esc?' escalated':''}" draggable="true" data-key="${t._key}" onclick="window._openTask('${t._key}')">
           <div class="task-top"><span class="task-title">${esc.esc?`<span class="esc-badge">⚠ ${esc.lbl}</span> `:''}${esc2(t.title)}</span><span class="task-priority ${pc}">${pl}</span></div>
           ${t.desc?`<div class="task-desc">${esc2(t.desc)}</div>`:''}
@@ -703,13 +716,26 @@ function initBoard(){
       cH+=`<div class="comment-input-wrap"><div class="mention-dropdown" id="mentionDrop"></div><div class="comment-input"><input type="text" id="cInput" placeholder="Skriv en kommentar... (@ for mentions)" onkeydown="window._cKey(event)" oninput="window._cInput(event)"><button onclick="window._addComment()">Send</button></div></div></div>`;
     }
 
-    // Checklist (works for both new and existing tasks)
+    // Steps system
     const cl=t.checklist||[];let clH='';
-    const clD=cl.filter(c=>c.done).length,pct=cl.length?Math.round(clD/cl.length*100):0;
-    clH=`<div class="checklist-section"><div class="cl-header"><span>☑ Tjekliste</span><span class="cl-progress">${clD}/${cl.length}</span></div>`;
-    if(cl.length)clH+=`<div class="cl-bar"><div class="cl-bar-fill" style="width:${pct}%"></div></div>`;
-    cl.forEach((c,i)=>{clH+=`<div class="cl-item${c.done?' done':''}"><input type="checkbox" ${c.done?'checked':''} onchange="window._togCl(${i})"><span>${esc2(c.text)}</span><button onclick="window._delCl(${i})">×</button></div>`});
-    clH+=`<div class="cl-add"><input type="text" id="clInput" placeholder="Tilføj punkt..." onkeydown="if(event.key==='Enter')window._addCl()"><button onclick="window._addCl()">+</button></div></div>`;
+    const stDone=cl.filter(c=>c.stepStatus==='done').length;
+    const stProg=cl.filter(c=>c.stepStatus==='in_progress').length;
+    const stTotal=cl.length;
+    const pctDone=stTotal?Math.round(stDone/stTotal*100):0;
+    const pctProg=stTotal?Math.round(stProg/stTotal*100):0;
+    clH=`<div class="steps-section"><div class="steps-header" onclick="window._toggleSteps()"><span><span class="steps-toggle" id="stepsToggle">▼</span> Trin (${stDone}/${stTotal})</span><span class="steps-progress">${pctDone}%</span></div>`;
+    if(stTotal)clH+=`<div class="steps-bar"><div class="steps-bar-done" style="width:${pctDone}%"></div><div class="steps-bar-prog" style="width:${pctProg}%"></div></div>`;
+    clH+=`<div class="steps-body" id="stepsBody">`;
+    cl.forEach((c,i)=>{
+      const ss=c.stepStatus||'not_started';
+      const sCls=ss==='done'?'ss-done':ss==='in_progress'?'ss-prog':'ss-not';
+      const sLbl=ss==='done'?'Færdig':ss==='in_progress'?'I gang':'Ikke startet';
+      clH+=`<div class="step-item"><div class="step-top"><span class="step-title">${esc2(c.text)}</span><button class="step-status ${sCls}" onclick="window._cycleStep(${i})">${sLbl}</button><button class="step-del" onclick="window._delCl(${i})">×</button></div>`;
+      if(c.stepAssignee)clH+=`<div class="step-assignee">${AV[c.stepAssignee]?`<span class="avatar ${AV[c.stepAssignee].cls}" style="width:16px;height:16px;font-size:7px;border:none">${AV[c.stepAssignee].ini}</span>`:''} ${esc2(c.stepAssignee)}</div>`;
+      if(c.stepNotes)clH+=`<div class="step-notes">${esc2(c.stepNotes)}</div>`;
+      clH+=`<div class="step-edit-row"><select onchange="window._stepAssign(${i},this.value)"><option value="">Ingen ansvarlig</option>${USERS.map(u=>`<option value="${u}"${c.stepAssignee===u?' selected':''}>${u}</option>`).join('')}</select><input type="text" placeholder="Noter..." value="${esc2(c.stepNotes||'')}" onchange="window._stepNotes(${i},this.value)" style="flex:1"></div></div>`;
+    });
+    clH+=`<div class="step-add"><input type="text" id="clInput" placeholder="Tilføj trin..." onkeydown="if(event.key==='Enter')window._addCl()"><button onclick="window._addCl()">+</button></div></div></div>`;
 
     let mvH='';
     if(!isNew){mvH=`<div class="move-btns">${ST.map(s=>`<button class="move-btn${s.key===t.status?' cur':''}" onclick="window._moveTask('${s.key}')">${s.key===t.status?'● ':''}${s.label}</button>`).join('')}</div>`}
@@ -880,37 +906,53 @@ function initBoard(){
     closeModal();window._openTask(editTask._key);
   };
 
-  // ── Checklist ──
-  function refreshChecklist(){
-    const cl=editTask.checklist||[];
-    const clD=cl.filter(c=>c.done).length,pct=cl.length?Math.round(clD/cl.length*100):0;
-    const section=document.querySelector('.checklist-section');
-    if(!section)return;
-    let h=`<div class="cl-header"><span>☑ Tjekliste</span><span class="cl-progress">${clD}/${cl.length}</span></div>`;
-    if(cl.length)h+=`<div class="cl-bar"><div class="cl-bar-fill" style="width:${pct}%"></div></div>`;
-    cl.forEach((c,i)=>{h+=`<div class="cl-item${c.done?' done':''}"><input type="checkbox" ${c.done?'checked':''} onchange="window._togCl(${i})"><span>${esc2(c.text)}</span><button onclick="window._delCl(${i})">×</button></div>`});
-    h+=`<div class="cl-add"><input type="text" id="clInput" placeholder="Tilføj punkt..." onkeydown="if(event.key==='Enter')window._addCl()"><button onclick="window._addCl()">+</button></div>`;
-    section.innerHTML=h;
-    const inp=document.getElementById('clInput');if(inp)inp.focus();
-  }
-
-  window._togCl=function(i){
+  // ── Steps ──
+  let stepsCollapsed=false;
+  window._toggleSteps=function(){
+    stepsCollapsed=!stepsCollapsed;
+    const body=document.getElementById('stepsBody'),tog=document.getElementById('stepsToggle');
+    if(body)body.style.maxHeight=stepsCollapsed?'0px':'none';
+    if(body)body.style.overflow=stepsCollapsed?'hidden':'visible';
+    if(tog)tog.classList.toggle('collapsed',stepsCollapsed);
+  };
+  function refreshSteps(){
     if(!editTask)return;
-    const cl=editTask.checklist||[];if(!cl[i])return;cl[i].done=!cl[i].done;
-    if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...cl.map(c=>({...c}))];fbSave(t)}}
-    refreshChecklist();
+    if(editTask._key){closeModal();window._openTask(editTask._key)}
+    else{closeModal();renderModal()}
+  }
+  function syncChecklist(){
+    if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...editTask.checklist.map(c=>({...c}))];fbSave(t)}}
+  }
+  window._cycleStep=function(i){
+    if(!editTask)return;
+    const cl=editTask.checklist||[];if(!cl[i])return;
+    const order=['not_started','in_progress','done'];
+    const cur=cl[i].stepStatus||'not_started';
+    cl[i].stepStatus=order[(order.indexOf(cur)+1)%3];
+    cl[i].done=cl[i].stepStatus==='done';
+    syncChecklist();refreshSteps();
+  };
+  window._stepAssign=function(i,user){
+    if(!editTask)return;
+    const cl=editTask.checklist||[];if(!cl[i])return;
+    cl[i].stepAssignee=user||'';
+    syncChecklist();
+  };
+  window._stepNotes=function(i,text){
+    if(!editTask)return;
+    const cl=editTask.checklist||[];if(!cl[i])return;
+    cl[i].stepNotes=text||'';
+    syncChecklist();
   };
   window._delCl=function(i){
     if(!editTask)return;
     const cl=editTask.checklist||[];cl.splice(i,1);
-    if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...cl.map(c=>({...c}))];fbSave(t)}}
-    refreshChecklist();
+    syncChecklist();refreshSteps();
   };
   window._addCl=function(){
     const inp=document.getElementById('clInput'),txt=inp.value.trim();if(!txt)return;
-    editTask.checklist=editTask.checklist||[];editTask.checklist.push({text:txt,done:false});
-    if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...editTask.checklist.map(c=>({...c}))];fbSave(t)}}
-    refreshChecklist();
+    editTask.checklist=editTask.checklist||[];editTask.checklist.push({text:txt,done:false,stepStatus:'not_started',stepAssignee:'',stepNotes:''});
+    syncChecklist();refreshSteps();
   };
   // ── Hover Preview ──
   let hoverTimer=null,previewEl=null;
@@ -928,11 +970,11 @@ function initBoard(){
         removePreview();
         const el=document.createElement('div');el.className='card-preview';
         const cl=t.checklist||[],cmts=t.comments||[],asgn=t.assignees||[];
-        const clD=cl.filter(c=>c.done).length;
+        const clD=cl.filter(c=>c.stepStatus==='done'||c.done).length;
         let h=`<div class="cp-title">${esc2(t.title)}</div>`;
         if(asgn.length){h+=`<div class="cp-section"><div class="cp-label">Ansvarlige</div><div class="cp-assignees"><span class="avatar-stack">${asgn.map(a=>AV[a]?`<span class="avatar ${AV[a].cls}" style="width:18px;height:18px;font-size:7px;border:none">${AV[a].ini}</span>`:'').join('')}</span>${asgn.join(' & ')}</div></div>`}
         if(t.deadline){const di=dlInfo(t.deadline,t.status);h+=`<div class="cp-section"><div class="cp-label">Deadline</div><div class="cp-deadline ${di.cls}">📅 ${fmtDate(t.deadline)}${di.label?' — '+di.label:''}</div></div>`}
-        if(cl.length){h+=`<div class="cp-section"><div class="cp-label">Tjekliste (${clD}/${cl.length})</div>`;cl.slice(0,5).forEach(c=>{h+=`<div class="cp-cl-item${c.done?' done':''}">${c.done?'☑':'☐'} ${esc2(c.text)}</div>`});if(cl.length>5)h+=`<div class="cp-cl-item" style="color:var(--text-dim);font-style:italic">+${cl.length-5} mere...</div>`;h+=`</div>`}
+        if(cl.length){h+=`<div class="cp-section"><div class="cp-label">Trin (${clD}/${cl.length})</div>`;cl.slice(0,5).forEach(c=>{const ss=c.stepStatus||'not_started';const ic=ss==='done'?'☑':ss==='in_progress'?'▶':'☐';h+=`<div class="cp-cl-item${ss==='done'?' done':''}">${ic} ${esc2(c.text)}</div>`});if(cl.length>5)h+=`<div class="cp-cl-item" style="color:var(--text-dim);font-style:italic">+${cl.length-5} mere...</div>`;h+=`</div>`}
         const lastCmt=cmts.filter(c=>!c.system).slice(-1)[0];
         if(lastCmt){h+=`<div class="cp-section"><div class="cp-label">Seneste kommentar</div><div class="cp-comment"><strong>${esc2(lastCmt.user)}:</strong> ${esc2(lastCmt.text).substring(0,80)}${lastCmt.text.length>80?'…':''}</div></div>`}
         el.innerHTML=h;
