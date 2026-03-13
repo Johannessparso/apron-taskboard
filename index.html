@@ -296,6 +296,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .task-card[draggable="true"]:active{cursor:grabbing}
 .task-card.dragging{opacity:.4;transform:scale(.96)}
 .col-body.drag-over{background:var(--blue-bg);border:2px dashed var(--blue-border);border-radius:8px;transition:background .15s}
+/* Tags */
+.tag-dots{display:flex;gap:3px;margin-right:4px}
+.tag-dot{width:7px;height:7px;border-radius:50%}
+.tag-chips{display:flex;gap:6px;flex-wrap:wrap}
+.tag-chip{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);transition:all .15s}
+.tag-chip:hover{opacity:.85}
+.tag-chip.selected{color:#fff}
 .empty-col{text-align:center;padding:24px 16px;color:var(--text-dim);font-size:12px}
 .created-by{font-size:11px;color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .loading-screen{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px}
@@ -353,6 +360,7 @@ const db=firebase.database(),tasksRef=db.ref('tasks'),metaRef=db.ref('meta');
 const USERS=['Johannes','Helmer','Daniel'];
 const AV={Johannes:{cls:'av-j',ini:'JS',color:'#3b82f6'},Helmer:{cls:'av-h',ini:'HE',color:'#10b981'},Daniel:{cls:'av-d',ini:'DL',color:'#8b5cf6'}};
 const ST=[{key:'todo',label:'To Do',dot:'var(--blue)',cls:'todo'},{key:'in-progress',label:'I gang',dot:'var(--amber)',cls:'prog'},{key:'done',label:'Færdig',dot:'var(--green)',cls:'done'}];
+const TAGS=[{key:'airline',label:'Airline',color:'var(--blue)',bg:'var(--blue-bg)',border:'var(--blue-border)'},{key:'personale',label:'Personale',color:'var(--green)',bg:'var(--green-bg)',border:'var(--green-border)'},{key:'udstyr',label:'Udstyr',color:'var(--amber)',bg:'var(--amber-bg)',border:'var(--amber-border)'},{key:'admin',label:'Admin',color:'var(--purple)',bg:'var(--purple-bg)',border:'var(--purple-border)'}];
 
 // ── Theme ──
 let curTheme=localStorage.getItem('atb-theme')||'dark';
@@ -490,7 +498,9 @@ function initBoard(){
           h+=`<div class="avatar-stack">${asgn.map(a=>AV[a]?`<span class="avatar ${AV[a].cls}">${AV[a].ini}</span>`:'').join('')}</div><span class="assignee-names">${asgn.join(' & ')}</span>`;
         }
         if(t.deadline&&t.status!=='done')h+=`<span class="task-dl ${di.cls}">${di.label}</span>`;
+        const tags=t.tags||[];
         h+=`<span class="task-badges">`;
+        if(tags.length)h+=`<span class="tag-dots">${tags.map(tg=>{const td=TAGS.find(x=>x.key===tg);return td?`<span class="tag-dot" style="background:${td.color}" title="${td.label}"></span>`:''}).join('')}</span>`;
         if(cmts.length)h+=`<span class="task-badge">💬${cmts.length}</span>`;
         if(cl.length)h+=`<span class="task-badge">☑${clD}/${cl.length}</span>`;
         h+=`</span></div></div>`;
@@ -643,10 +653,10 @@ function initBoard(){
     const a=t.assignees||[];if(!a.includes(cUser)){a.push(cUser);t.assignees=a;
     const c=t.comments||[];c.push({user:cUser,text:'Jeg tager denne opgave.',time:timeStr(),system:true});t.comments=c;fbSave(t)}
   };
-  window._newTask=function(status){editTask={_key:null,title:'',desc:'',assignees:[],createdBy:cUser,priority:'medium',status,deadline:'',comments:[],checklist:[]};renderModal()};
+  window._newTask=function(status){editTask={_key:null,title:'',desc:'',assignees:[],tags:[],createdBy:cUser,priority:'medium',status,deadline:'',comments:[],checklist:[]};renderModal()};
   window._openTask=function(key){
     const t=tasks.find(x=>x._key===key);if(!t)return;
-    editTask={...t,assignees:[...(t.assignees||[])],comments:[...(t.comments||[])],checklist:[...(t.checklist||[]).map(c=>({...c}))]};
+    editTask={...t,assignees:[...(t.assignees||[])],tags:[...(t.tags||[])],comments:[...(t.comments||[])],checklist:[...(t.checklist||[]).map(c=>({...c}))]};
     renderModal();
   };
 
@@ -662,6 +672,8 @@ function initBoard(){
     if(!isNew){const e=checkEsc(t);if(e.esc)escH=`<div class="esc-info"><span class="esc-icon">⚠️</span><div><div class="esc-label">Prioritet eskaleret</div><div class="esc-detail">Original: ${e.orig} → Eskaleret pga. deadline (${e.lbl})</div></div></div>`}
 
     let aH=`<div class="field"><label>Ansvarlige (max 2)</label><div class="a-chips">${USERS.map(u=>`<div class="a-chip${asgn.includes(u)?' selected':''}" data-user="${u}" onclick="window._togAssign('${u}')"><span class="ca ${AV[u].cls}">${AV[u].ini}</span>${u}</div>`).join('')}</div></div>`;
+    const tTags=t.tags||[];
+    let tagH=`<div class="field"><label>Tags</label><div class="tag-chips">${TAGS.map(tg=>`<div class="tag-chip${tTags.includes(tg.key)?' selected':''}" data-tag="${tg.key}" onclick="window._togTag('${tg.key}')" style="${tTags.includes(tg.key)?`background:${tg.color};border-color:${tg.color}`:`border-color:${tg.border};color:${tg.color}`}">${tg.label}</div>`).join('')}</div></div>`;
 
     // Comments
     const cmts=t.comments||[];let cH='';
@@ -707,7 +719,7 @@ function initBoard(){
       ${escH}${claimH}
       <div class="field"><label>Titel</label><input type="text" id="tTitle" value="${esc2(t.title)}" placeholder="Hvad skal gøres?"></div>
       <div class="field"><label>Beskrivelse</label><textarea id="tDesc" placeholder="Tilføj detaljer...">${esc2(t.desc||'')}</textarea></div>
-      ${aH}
+      ${aH}${tagH}
       <div class="field-row"><div class="field"><label>Prioritet</label><select id="tPri"><option value="high"${t.priority==='high'?' selected':''}>Høj</option><option value="medium"${t.priority==='medium'?' selected':''}>Medium</option><option value="low"${t.priority==='low'?' selected':''}>Lav</option></select></div><div class="field"><label>Deadline</label><input type="date" id="tDl" value="${t.deadline||''}"></div></div>
       ${mvH}${clH}${cH}
       <div class="btn-row">${!isNew?`<button class="btn btn-danger" onclick="window._delTask()" style="margin-right:auto">Slet</button>`:''}${!isNew&&t.archived?`<button class="btn btn-secondary" onclick="window._unarchiveTask('${t._key}')" style="margin-right:auto">↩ Genåbn</button>`:''}${!isNew&&t.status==='done'&&!t.archived?`<button class="btn btn-secondary" onclick="window._archiveTask('${t._key}')">📦 Arkivér</button>`:''}<button class="btn btn-secondary" onclick="window._closeModal()">Annuller</button><button class="btn btn-primary" onclick="window._saveTask()">${isNew?'Opret':'Gem'}</button></div>
@@ -715,6 +727,18 @@ function initBoard(){
     document.body.appendChild(ov);
   }
 
+  window._togTag=function(tag){
+    editTask.tags=editTask.tags||[];
+    const i=editTask.tags.indexOf(tag);
+    if(i>=0)editTask.tags.splice(i,1);else editTask.tags.push(tag);
+    document.querySelectorAll('.tag-chip').forEach(chip=>{
+      const k=chip.dataset.tag,sel=editTask.tags.includes(k),tg=TAGS.find(x=>x.key===k);
+      chip.classList.toggle('selected',sel);
+      chip.style.background=sel?tg.color:'var(--surface2)';
+      chip.style.borderColor=sel?tg.color:tg.border;
+      chip.style.color=sel?'#fff':tg.color;
+    });
+  };
   window._togAssign=function(u){
     const a=editTask.assignees||[];const i=a.indexOf(u);
     if(i>=0)a.splice(i,1);else if(a.length<2)a.push(u);
@@ -736,7 +760,7 @@ function initBoard(){
 
   window._saveTask=function(){
     const ti=document.getElementById('tTitle').value.trim();if(!ti)return;
-    const data={title:ti,desc:document.getElementById('tDesc').value.trim(),priority:document.getElementById('tPri').value,deadline:document.getElementById('tDl').value,assignees:[...(editTask.assignees||[])],comments:editTask.comments||[],checklist:editTask.checklist||[],status:editTask.status,createdBy:editTask.createdBy||cUser};
+    const data={title:ti,desc:document.getElementById('tDesc').value.trim(),priority:document.getElementById('tPri').value,deadline:document.getElementById('tDl').value,assignees:[...(editTask.assignees||[])],tags:[...(editTask.tags||[])],comments:editTask.comments||[],checklist:editTask.checklist||[],status:editTask.status,createdBy:editTask.createdBy||cUser};
     if(editTask._key)data._key=editTask._key;
     fbSave(data);closeModal();
   };
