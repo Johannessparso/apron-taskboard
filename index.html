@@ -57,6 +57,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .filter-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;font-family:inherit}
 .filter-btn:hover{border-color:var(--blue-border);color:var(--blue)}
 .filter-btn.active{border-color:var(--blue-border);background:var(--blue-bg);color:var(--blue)}
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-input{padding:6px 30px 6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);font-family:inherit;font-size:12px;color:var(--text);width:180px;transition:all .2s}
+.search-input:focus{outline:none;border-color:var(--blue);width:220px}
+.search-input::placeholder{color:var(--text-dim)}
+.search-clear{position:absolute;right:8px;background:none;border:none;font-size:14px;color:var(--text-dim);cursor:pointer;padding:2px;line-height:1;display:none}
+.search-clear:hover{color:var(--text)}
 .view-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .view-toggle button{padding:6px 12px;border:none;background:var(--surface2);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-dim);transition:all .15s}
 .view-toggle button.active{background:var(--blue-bg);color:var(--blue)}
@@ -356,6 +362,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div><div class="app-title">Apron Task Board</div><div class="app-sub">Apron Leadership — CPH</div></div>
 </div>
 <div class="topbar-right">
+<div class="search-wrap" id="searchWrap" style="display:none"><input class="search-input" id="searchInput" type="text" placeholder="Søg opgaver..." oninput="window._onSearch()"><button class="search-clear" id="searchClear" onclick="window._clearSearch()">✕</button></div>
 <button class="filter-btn" id="myFilterBtn" onclick="window._toggleMyFilter()" style="display:none">👤 Mine</button>
 <div class="view-toggle" id="viewToggle" style="display:none">
   <button class="active" data-view="kanban" onclick="window._setView('kanban')">☰ Kanban</button>
@@ -440,8 +447,9 @@ function initBoard(){
   document.getElementById('viewToggle').style.display='flex';
   document.getElementById('themeBtn').style.display='flex';
   document.getElementById('myFilterBtn').style.display='flex';
+  document.getElementById('searchWrap').style.display='flex';
 
-  let tasks=[],editTask=null,initialized=false,mentionIdx=-1,myFilter=false;
+  let tasks=[],editTask=null,initialized=false,mentionIdx=-1,myFilter=false,searchQuery='';
 
   tasksRef.on('value',snap=>{
     const data=snap.val();
@@ -532,11 +540,21 @@ function initBoard(){
     document.getElementById('myFilterBtn').classList.toggle('active',myFilter);
     render();
   };
+  window._onSearch=function(){
+    searchQuery=document.getElementById('searchInput').value.trim().toLowerCase();
+    document.getElementById('searchClear').style.display=searchQuery?'block':'none';
+    render();
+  };
+  window._clearSearch=function(){
+    document.getElementById('searchInput').value='';searchQuery='';
+    document.getElementById('searchClear').style.display='none';
+    render();
+  };
 
   function renderBoard(){
     const board=document.getElementById('board');let h='';
     ST.forEach(s=>{
-      const st=tasks.filter(t=>t.status===s.key&&!t.archived&&(!myFilter||(t.assignees||[]).includes(cUser))).sort((a,b)=>{
+      const st=tasks.filter(t=>t.status===s.key&&!t.archived&&(!myFilter||(t.assignees||[]).includes(cUser))&&(!searchQuery||(t.title||'').toLowerCase().includes(searchQuery)||(t.desc||'').toLowerCase().includes(searchQuery))).sort((a,b)=>{
         const ua=(a.assignees||[]).length===0?0:1,ub=(b.assignees||[]).length===0?0:1;
         if(ua!==ub)return ua-ub;
         return({high:0,medium:1,low:2}[dispPri(a)]||1)-({high:0,medium:1,low:2}[dispPri(b)]||1);
