@@ -207,6 +207,28 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .comment-time{font-size:10px;color:var(--text-dim)}
 .comment-text{font-size:12px;color:var(--text-mid);line-height:1.5}
 .comment-text .mention{color:var(--blue);font-weight:700;background:var(--blue-bg);padding:1px 4px;border-radius:3px}
+.comment-reactions{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.react-btn{padding:2px 7px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:12px;transition:all .15s;display:flex;align-items:center;gap:3px;font-family:inherit}
+.react-btn:hover{border-color:var(--blue-border);background:var(--blue-bg)}
+.react-btn.reacted{border-color:var(--blue-border);background:var(--blue-bg)}
+.react-btn .react-count{font-size:10px;font-weight:700;color:var(--text-mid)}
+.react-btn .react-who{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--text-mid);white-space:nowrap;box-shadow:var(--shadow);z-index:10;margin-bottom:4px}
+.react-btn:hover .react-who{display:block}
+.react-btn{position:relative}
+/* Comment menu */
+.comment-menu-wrap{position:relative;margin-left:auto;flex-shrink:0}
+.comment-menu-btn{background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-dim);padding:2px 4px;border-radius:4px;opacity:0;transition:opacity .15s;line-height:1}
+.comment:hover .comment-menu-btn{opacity:1}
+.comment-menu-btn:hover{color:var(--text);background:var(--surface3)}
+.comment-menu{position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;z-index:10;min-width:100px}
+.comment-menu button{display:block;width:100%;padding:8px 14px;border:none;background:none;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;text-align:left;transition:background .1s}
+.comment-menu button:hover{background:var(--surface2);color:var(--text)}
+.comment-menu button.cm-delete:hover{background:var(--red-bg);color:var(--red)}
+.comment-edit-wrap{display:flex;gap:6px;margin-top:4px}
+.comment-edit-wrap input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--blue);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)}
+.comment-edit-wrap button{padding:6px 10px;border-radius:6px;border:none;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.comment-edit-wrap .ce-save{background:var(--blue);color:#000}
+.comment-edit-wrap .ce-cancel{background:var(--surface3);color:var(--text-mid)}
 .comment-system{font-style:italic;color:var(--text-dim)}
 .comment-input-wrap{position:relative;margin-top:8px}
 .comment-input{display:flex;gap:8px}
@@ -254,6 +276,23 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .esc-info .esc-icon{font-size:16px}
 .esc-info .esc-label{font-size:12px;font-weight:700;color:var(--red)}
 .esc-info .esc-detail{font-size:11px;color:var(--text-mid)}
+/* Hover Preview Popover */
+.card-preview{position:absolute;z-index:70;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.3);padding:14px 16px;width:280px;pointer-events:none;animation:fadeIn .12s}
+.card-preview .cp-title{font-size:13px;font-weight:700;margin-bottom:8px;line-height:1.3}
+.card-preview .cp-section{margin-bottom:8px}
+.card-preview .cp-label{font-size:9px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.card-preview .cp-assignees{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-mid)}
+.card-preview .cp-deadline{font-size:11px;color:var(--text-mid);display:flex;align-items:center;gap:4px}
+.card-preview .cp-cl-item{font-size:11px;color:var(--text-mid);padding:2px 0;display:flex;align-items:center;gap:5px}
+.card-preview .cp-cl-item.done{text-decoration:line-through;color:var(--text-dim)}
+.card-preview .cp-comment{font-size:11px;color:var(--text-mid);line-height:1.4}
+.card-preview .cp-comment strong{color:var(--text);font-weight:600}
+@media(hover:none){.card-preview{display:none!important}}
+/* Drag & Drop */
+.task-card[draggable="true"]{cursor:grab}
+.task-card[draggable="true"]:active{cursor:grabbing}
+.task-card.dragging{opacity:.4;transform:scale(.96)}
+.col-body.drag-over{background:var(--blue-bg);border:2px dashed var(--blue-border);border-radius:8px;transition:background .15s}
 .empty-col{text-align:center;padding:24px 16px;color:var(--text-dim);font-size:12px}
 .created-by{font-size:11px;color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .loading-screen{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px}
@@ -419,7 +458,7 @@ function initBoard(){
         if(ua!==ub)return ua-ub;
         return({high:0,medium:1,low:2}[dispPri(a)]||1)-({high:0,medium:1,low:2}[dispPri(b)]||1);
       });
-      h+=`<div class="col"><div class="col-head ${s.cls}"><span class="col-title"><span class="col-dot" style="color:${s.dot};background:${s.dot}"></span>${s.label}</span><span class="col-count">${st.length}</span></div><div class="col-body">`;
+      h+=`<div class="col"><div class="col-head ${s.cls}"><span class="col-title"><span class="col-dot" style="color:${s.dot};background:${s.dot}"></span>${s.label}</span><span class="col-count">${st.length}</span></div><div class="col-body" data-status="${s.key}">`;
       if(!st.length)h+=`<div class="empty-col">Ingen opgaver her</div>`;
       st.forEach(t=>{
         const asgn=t.assignees||[],uc=!asgn.length;
@@ -429,7 +468,7 @@ function initBoard(){
         const di=dlInfo(t.deadline,t.status);
         const cl=t.checklist||[],cmts=t.comments||[];
         const clD=cl.filter(c=>c.done).length;
-        h+=`<div class="task-card${uc?' unclaimed':''}${esc.esc?' escalated':''}" onclick="window._openTask('${t._key}')">
+        h+=`<div class="task-card${uc?' unclaimed':''}${esc.esc?' escalated':''}" draggable="true" data-key="${t._key}" onclick="window._openTask('${t._key}')">
           <div class="task-top"><span class="task-title">${esc.esc?`<span class="esc-badge">⚠ ${esc.lbl}</span> `:''}${esc2(t.title)}</span><span class="task-priority ${pc}">${pl}</span></div>
           ${t.desc?`<div class="task-desc">${esc2(t.desc)}</div>`:''}
           ${t.deadline&&t.status!=='done'?`<div class="deadline-bar"><div class="deadline-fill" style="width:${di.pct}%;background:${di.color}"></div></div>`:''}
@@ -450,6 +489,57 @@ function initBoard(){
       h+=`<button class="add-btn" onclick="window._newTask('${s.key}')">+ Ny opgave</button></div>`;
     });
     board.innerHTML=h;
+    initDragDrop();
+  }
+
+  // ── Drag & Drop ──
+  let draggedKey=null;
+  function initDragDrop(){
+    document.querySelectorAll('.task-card[draggable]').forEach(card=>{
+      card.addEventListener('dragstart',function(e){
+        draggedKey=card.dataset.key;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed='move';
+        e.dataTransfer.setData('text/plain',draggedKey);
+        // Remove preview on drag
+        removePreview&&removePreview();
+      });
+      card.addEventListener('dragend',function(){
+        card.classList.remove('dragging');
+        draggedKey=null;
+        document.querySelectorAll('.col-body.drag-over').forEach(el=>el.classList.remove('drag-over'));
+      });
+    });
+    document.querySelectorAll('.col-body[data-status]').forEach(col=>{
+      col.addEventListener('dragover',function(e){
+        e.preventDefault();
+        e.dataTransfer.dropEffect='move';
+        col.classList.add('drag-over');
+      });
+      col.addEventListener('dragleave',function(e){
+        if(!col.contains(e.relatedTarget))col.classList.remove('drag-over');
+      });
+      col.addEventListener('drop',function(e){
+        e.preventDefault();
+        col.classList.remove('drag-over');
+        const key=e.dataTransfer.getData('text/plain');
+        const newStatus=col.dataset.status;
+        if(!key||!newStatus)return;
+        const t=tasks.find(x=>x._key===key);
+        if(!t||t.status===newStatus)return;
+        const oldLabel=ST.find(x=>x.key===t.status)?.label||t.status;
+        const newLabel=ST.find(x=>x.key===newStatus)?.label||newStatus;
+        t.status=newStatus;
+        const c=t.comments||[];
+        c.push({user:cUser,text:`Flyttet fra "${oldLabel}" til "${newLabel}".`,time:timeStr(),system:true});
+        t.comments=c;
+        // Feed notifications
+        (t.assignees||[]).forEach(u=>{
+          pushFeedEvent(u,'move',`<strong>${cUser}</strong> flyttede til <strong>${newLabel}</strong>`,t._key,t.title);
+        });
+        fbSave(t);
+      });
+    });
   }
 
   // ── Archive ──
@@ -566,10 +656,26 @@ function initBoard(){
     const cmts=t.comments||[];let cH='';
     if(!isNew){
       cH=`<div class="comments-section"><div class="comments-title">💬 Kommentarer (${cmts.length})</div>`;
-      cmts.forEach(c=>{
+      cmts.forEach((c,ci)=>{
+        const reactions=c.reactions||{};
+        const REACTS=['👍','✅','👀'];
+        let reactH='';
+        if(!c.system){
+          reactH='<div class="comment-reactions">';
+          REACTS.forEach(em=>{
+            const users=reactions[em]||[];
+            const reacted=users.includes(cUser);
+            reactH+=`<button class="react-btn${reacted?' reacted':''}" onclick="event.stopPropagation();window._toggleReaction(${ci},'${em}')">${em}${users.length?`<span class="react-count">${users.length}</span><span class="react-who">${users.join(', ')}</span>`:''}</button>`;
+          });
+          reactH+='</div>';
+        }
+        let menuH='';
+        if(!c.system&&c.user===cUser){
+          menuH=`<div class="comment-menu-wrap"><button class="comment-menu-btn" onclick="event.stopPropagation();window._toggleCommentMenu(${ci})">⋯</button><div class="comment-menu" id="cmMenu${ci}" style="display:none"><button onclick="window._editComment(${ci})">✏️ Rediger</button><button class="cm-delete" onclick="window._deleteComment(${ci})">🗑 Slet</button></div></div>`;
+        }
         cH+=`<div class="comment"><span class="avatar ${AV[c.user]?.cls||'av-j'}" style="border:none;width:20px;height:20px;font-size:8px">${AV[c.user]?.ini||'?'}</span>
-          <div class="comment-body"><div class="comment-header"><span class="comment-name">${esc2(c.user)}</span><span class="comment-time">${esc2(c.time)}</span></div>
-          <div class="comment-text${c.system?' comment-system':''}">${renderMentions(esc2(c.text))}</div></div></div>`;
+          <div class="comment-body"><div class="comment-header"><span class="comment-name">${esc2(c.user)}</span><span class="comment-time">${esc2(c.time)}</span>${menuH}</div>
+          <div class="comment-text${c.system?' comment-system':''}" id="cmText${ci}">${renderMentions(esc2(c.text))}</div>${reactH}</div></div>`;
       });
       cH+=`<div class="comment-input-wrap"><div class="mention-dropdown" id="mentionDrop"></div><div class="comment-input"><input type="text" id="cInput" placeholder="Skriv en kommentar... (@ for mentions)" onkeydown="window._cKey(event)" oninput="window._cInput(event)"><button onclick="window._addComment()">Send</button></div></div></div>`;
     }
@@ -679,6 +785,66 @@ function initBoard(){
     editTask.comments=[...c];closeModal();window._openTask(editTask._key);
   };
 
+  // ── Comment Reactions ──
+  window._toggleReaction=function(ci,emoji){
+    if(!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
+    const c=(t.comments||[])[ci];if(!c||c.system)return;
+    if(!c.reactions)c.reactions={};
+    if(!c.reactions[emoji])c.reactions[emoji]=[];
+    const idx=c.reactions[emoji].indexOf(cUser);
+    if(idx>=0)c.reactions[emoji].splice(idx,1);
+    else c.reactions[emoji].push(cUser);
+    if(!c.reactions[emoji].length)delete c.reactions[emoji];
+    fbSave(t);
+    editTask.comments=[...(t.comments||[])];
+    closeModal();window._openTask(editTask._key);
+  };
+
+  // ── Comment Edit/Delete ──
+  window._toggleCommentMenu=function(ci){
+    const menu=document.getElementById('cmMenu'+ci);if(!menu)return;
+    const isOpen=menu.style.display!=='none';
+    document.querySelectorAll('.comment-menu').forEach(m=>m.style.display='none');
+    menu.style.display=isOpen?'none':'block';
+  };
+  // Close menus on outside click
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('.comment-menu-wrap'))document.querySelectorAll('.comment-menu').forEach(m=>m.style.display='none');
+  });
+  window._editComment=function(ci){
+    document.querySelectorAll('.comment-menu').forEach(m=>m.style.display='none');
+    if(!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
+    const c=(t.comments||[])[ci];if(!c||c.user!==cUser)return;
+    const textEl=document.getElementById('cmText'+ci);if(!textEl)return;
+    textEl.innerHTML=`<div class="comment-edit-wrap"><input type="text" id="ceInput${ci}" value="${esc2(c.text)}"><button class="ce-save" onclick="window._saveEditComment(${ci})">Gem</button><button class="ce-cancel" onclick="window._cancelEditComment()">Annuller</button></div>`;
+    const inp=document.getElementById('ceInput'+ci);if(inp){inp.focus();inp.selectionStart=inp.selectionEnd=inp.value.length;
+    inp.onkeydown=function(e){if(e.key==='Enter')window._saveEditComment(ci);if(e.key==='Escape')window._cancelEditComment()}}
+  };
+  window._saveEditComment=function(ci){
+    if(!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
+    const c=(t.comments||[])[ci];if(!c||c.user!==cUser)return;
+    const inp=document.getElementById('ceInput'+ci);if(!inp)return;
+    const newText=inp.value.trim();if(!newText)return;
+    c.text=newText;c.edited=true;
+    fbSave(t);editTask.comments=[...(t.comments||[])];
+    closeModal();window._openTask(editTask._key);
+  };
+  window._cancelEditComment=function(){
+    if(!editTask||!editTask._key)return;
+    closeModal();window._openTask(editTask._key);
+  };
+  window._deleteComment=function(ci){
+    if(!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
+    const c=(t.comments||[])[ci];if(!c||c.user!==cUser)return;
+    t.comments.splice(ci,1);
+    fbSave(t);editTask.comments=[...(t.comments||[])];
+    closeModal();window._openTask(editTask._key);
+  };
+
   // ── Checklist ──
   function refreshChecklist(){
     const cl=editTask.checklist||[];
@@ -711,6 +877,47 @@ function initBoard(){
     if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...editTask.checklist.map(c=>({...c}))];fbSave(t)}}
     refreshChecklist();
   };
+  // ── Hover Preview ──
+  let hoverTimer=null,previewEl=null;
+  const isTouchDevice=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+  if(!isTouchDevice){
+    document.addEventListener('mouseover',function(e){
+      const card=e.target.closest('.task-card');
+      if(!card)return;
+      clearTimeout(hoverTimer);
+      hoverTimer=setTimeout(()=>{
+        const key=card.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+        if(!key)return;
+        const t=tasks.find(x=>x._key===key);
+        if(!t)return;
+        removePreview();
+        const el=document.createElement('div');el.className='card-preview';
+        const cl=t.checklist||[],cmts=t.comments||[],asgn=t.assignees||[];
+        const clD=cl.filter(c=>c.done).length;
+        let h=`<div class="cp-title">${esc2(t.title)}</div>`;
+        if(asgn.length){h+=`<div class="cp-section"><div class="cp-label">Ansvarlige</div><div class="cp-assignees"><span class="avatar-stack">${asgn.map(a=>AV[a]?`<span class="avatar ${AV[a].cls}" style="width:18px;height:18px;font-size:7px;border:none">${AV[a].ini}</span>`:'').join('')}</span>${asgn.join(' & ')}</div></div>`}
+        if(t.deadline){const di=dlInfo(t.deadline,t.status);h+=`<div class="cp-section"><div class="cp-label">Deadline</div><div class="cp-deadline ${di.cls}">📅 ${fmtDate(t.deadline)}${di.label?' — '+di.label:''}</div></div>`}
+        if(cl.length){h+=`<div class="cp-section"><div class="cp-label">Tjekliste (${clD}/${cl.length})</div>`;cl.slice(0,5).forEach(c=>{h+=`<div class="cp-cl-item${c.done?' done':''}">${c.done?'☑':'☐'} ${esc2(c.text)}</div>`});if(cl.length>5)h+=`<div class="cp-cl-item" style="color:var(--text-dim);font-style:italic">+${cl.length-5} mere...</div>`;h+=`</div>`}
+        const lastCmt=cmts.filter(c=>!c.system).slice(-1)[0];
+        if(lastCmt){h+=`<div class="cp-section"><div class="cp-label">Seneste kommentar</div><div class="cp-comment"><strong>${esc2(lastCmt.user)}:</strong> ${esc2(lastCmt.text).substring(0,80)}${lastCmt.text.length>80?'…':''}</div></div>`}
+        el.innerHTML=h;
+        document.body.appendChild(el);
+        previewEl=el;
+        const rect=card.getBoundingClientRect();
+        let left=rect.right+8,top=rect.top;
+        if(left+290>window.innerWidth)left=rect.left-288;
+        if(top+el.offsetHeight>window.innerHeight)top=window.innerHeight-el.offsetHeight-8;
+        if(top<8)top=8;
+        el.style.left=left+'px';el.style.top=top+'px';el.style.position='fixed';
+      },500);
+    });
+    document.addEventListener('mouseout',function(e){
+      const card=e.target.closest('.task-card');
+      if(card){clearTimeout(hoverTimer);removePreview()}
+    });
+    function removePreview(){if(previewEl){previewEl.remove();previewEl=null}}
+  }
+
   // ── Activity Feed ──
   const feedRef=db.ref('feed/'+cUser);
   let feedItems=[],feedLastRead=parseInt(localStorage.getItem('atb-feed-read-'+cUser)||'0');
