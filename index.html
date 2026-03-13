@@ -1074,8 +1074,31 @@ function initBoard(){
   };
   function refreshSteps(){
     if(!editTask)return;
-    if(editTask._key){closeModal();window._openTask(editTask._key)}
-    else{closeModal();renderModal()}
+    const t=editTask;
+    const cl=t.checklist||[];
+    const stDone=cl.filter(c=>c.stepStatus==='done').length;
+    const stProg=cl.filter(c=>c.stepStatus==='in_progress').length;
+    const stTotal=cl.length;
+    const pctDone=stTotal?Math.round(stDone/stTotal*100):0;
+    const pctProg=stTotal?Math.round(stProg/stTotal*100):0;
+    // Update steps section in-place
+    const sec=document.querySelector('.steps-section');
+    if(!sec){return}
+    let clH=`<div class="steps-header" onclick="window._toggleSteps()"><span><span class="steps-toggle" id="stepsToggle">▼</span> Trin (${stDone}/${stTotal})</span><span class="steps-progress">${pctDone}%</span></div>`;
+    if(stTotal)clH+=`<div class="steps-bar"><div class="steps-bar-done" style="width:${pctDone}%"></div><div class="steps-bar-prog" style="width:${pctProg}%"></div></div>`;
+    clH+=`<div class="steps-body" id="stepsBody">`;
+    cl.forEach((c,i)=>{
+      const ss=c.stepStatus||'not_started';
+      const sCls=ss==='done'?'ss-done':ss==='in_progress'?'ss-prog':'ss-not';
+      const sLbl=ss==='done'?'Færdig':ss==='in_progress'?'I gang':'Ikke startet';
+      clH+=`<div class="step-item"><div class="step-top"><span class="step-title">${esc2(c.text)}</span><button class="step-status ${sCls}" onclick="window._cycleStep(${i})">${sLbl}</button><button class="step-del" onclick="window._delCl(${i})">×</button></div>`;
+      if(c.stepAssignee)clH+=`<div class="step-assignee">${AV[c.stepAssignee]?`<span class="avatar ${AV[c.stepAssignee].cls}" style="width:16px;height:16px;font-size:7px;border:none">${AV[c.stepAssignee].ini}</span>`:''} ${esc2(c.stepAssignee)}</div>`;
+      if(c.stepNotes)clH+=`<div class="step-notes">${esc2(c.stepNotes)}</div>`;
+      clH+=`<div class="step-edit-row"><select onchange="window._stepAssign(${i},this.value)"><option value="">Ingen ansvarlig</option>${USERS.map(u=>`<option value="${u}"${c.stepAssignee===u?' selected':''}>${u}</option>`).join('')}</select><input type="text" placeholder="Noter..." value="${esc2(c.stepNotes||'')}" onchange="window._stepNotes(${i},this.value)" style="flex:1"></div></div>`;
+    });
+    clH+=`<div class="step-add"><input type="text" id="clInput" placeholder="Tilføj trin..." onkeydown="if(event.key==='Enter')window._addCl()"><button onclick="window._addCl()">+</button></div></div>`;
+    sec.innerHTML=clH;
+    renderBoard();
   }
   function syncChecklist(){
     if(editTask._key){const t=tasks.find(x=>x._key===editTask._key);if(t){t.checklist=[...editTask.checklist.map(c=>({...c}))];fbSave(t)}}
@@ -1110,6 +1133,8 @@ function initBoard(){
     const inp=document.getElementById('clInput'),txt=inp.value.trim();if(!txt)return;
     editTask.checklist=editTask.checklist||[];editTask.checklist.push({text:txt,done:false,stepStatus:'not_started',stepAssignee:'',stepNotes:''});
     syncChecklist();refreshSteps();
+    const newInp=document.getElementById('clInput');
+    if(newInp){newInp.value='';newInp.focus()}
   };
   // ── Hover Preview ──
   let hoverTimer=null,previewEl=null;
