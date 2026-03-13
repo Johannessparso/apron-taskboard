@@ -320,6 +320,17 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .loading-screen{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px}
 .loading-screen .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* Welcome Banner */
+.welcome-banner{background:linear-gradient(135deg,var(--blue-bg),var(--purple-bg));border:1px solid var(--blue-border);border-radius:12px;margin:16px 24px 0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;animation:fadeIn .3s}
+.welcome-text{font-size:14px;font-weight:600;line-height:1.5}
+.welcome-text .welcome-name{color:var(--blue);font-weight:700}
+.welcome-stats{font-size:12px;color:var(--text-mid);margin-top:4px}
+.welcome-stats span{font-weight:700}
+.welcome-stats .ws-prog{color:var(--amber)}
+.welcome-stats .ws-over{color:var(--red)}
+.welcome-stats .ws-wait{color:var(--purple)}
+.welcome-close{background:none;border:none;font-size:18px;color:var(--text-dim);cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s;flex-shrink:0}
+.welcome-close:hover{color:var(--text);background:var(--surface3)}
 </style>
 </head>
 <body>
@@ -339,6 +350,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 </div>
 </div>
 <div class="progress-strip" id="progStrip"></div>
+<div id="welcomeWrap"></div>
 <div class="main-wrap">
 <div class="main-left">
 <div class="board" id="board"><div class="loading-screen"><div class="spinner"></div><span style="color:var(--text-dim);font-size:13px">Forbinder...</span></div></div>
@@ -448,7 +460,23 @@ function initBoard(){
   function dispPri(task){const e=checkEsc(task);if(!e.esc)return task.priority;if(e.orig==='low')return'medium';return'high'}
 
   // ── Render ──
-  function render(){renderProgress();renderBoard();renderArchive();if(curView==='week')_renderWeek()}
+  function render(){renderProgress();renderBoard();renderArchive();renderWelcome();if(curView==='week')_renderWeek()}
+
+  function renderWelcome(){
+    const wrap=document.getElementById('welcomeWrap');if(!wrap)return;
+    if(sessionStorage.getItem('atb-welcome-dismissed'))return;
+    const myTasks=tasks.filter(t=>(t.assignees||[]).includes(cUser)&&!t.archived);
+    const inProg=myTasks.filter(t=>t.status==='in-progress').length;
+    const overdue=myTasks.filter(t=>t.deadline&&t.status!=='done'&&Math.ceil((new Date(t.deadline)-new Date())/(864e5))<0).length;
+    const waiting=tasks.filter(t=>(!t.assignees||!t.assignees.length)&&!t.archived&&t.status!=='done').length;
+    const hour=new Date().getHours();
+    const greeting=hour<12?'God morgen':hour<18?'God eftermiddag':'God aften';
+    wrap.innerHTML=`<div class="welcome-banner"><div><div class="welcome-text">${greeting}, <span class="welcome-name">${cUser}</span></div><div class="welcome-stats"><span class="ws-prog">${inProg} opgaver i gang</span>${overdue?`, <span class="ws-over">${overdue} overskredet deadline</span>`:''}, <span class="ws-wait">${waiting} venter på dig</span></div></div><button class="welcome-close" onclick="window._dismissWelcome()">✕</button></div>`;
+  }
+  window._dismissWelcome=function(){
+    sessionStorage.setItem('atb-welcome-dismissed','1');
+    const wrap=document.getElementById('welcomeWrap');if(wrap)wrap.innerHTML='';
+  };
 
   function renderProgress(){
     const todo=tasks.filter(t=>t.status==='todo').length,prog=tasks.filter(t=>t.status==='in-progress').length;
