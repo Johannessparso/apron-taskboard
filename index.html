@@ -215,6 +215,20 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .react-btn .react-who{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--text-mid);white-space:nowrap;box-shadow:var(--shadow);z-index:10;margin-bottom:4px}
 .react-btn:hover .react-who{display:block}
 .react-btn{position:relative}
+/* Comment menu */
+.comment-menu-wrap{position:relative;margin-left:auto;flex-shrink:0}
+.comment-menu-btn{background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-dim);padding:2px 4px;border-radius:4px;opacity:0;transition:opacity .15s;line-height:1}
+.comment:hover .comment-menu-btn{opacity:1}
+.comment-menu-btn:hover{color:var(--text);background:var(--surface3)}
+.comment-menu{position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;z-index:10;min-width:100px}
+.comment-menu button{display:block;width:100%;padding:8px 14px;border:none;background:none;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-mid);cursor:pointer;text-align:left;transition:background .1s}
+.comment-menu button:hover{background:var(--surface2);color:var(--text)}
+.comment-menu button.cm-delete:hover{background:var(--red-bg);color:var(--red)}
+.comment-edit-wrap{display:flex;gap:6px;margin-top:4px}
+.comment-edit-wrap input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--blue);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)}
+.comment-edit-wrap button{padding:6px 10px;border-radius:6px;border:none;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.comment-edit-wrap .ce-save{background:var(--blue);color:#000}
+.comment-edit-wrap .ce-cancel{background:var(--surface3);color:var(--text-mid)}
 .comment-system{font-style:italic;color:var(--text-dim)}
 .comment-input-wrap{position:relative;margin-top:8px}
 .comment-input{display:flex;gap:8px}
@@ -599,9 +613,13 @@ function initBoard(){
           });
           reactH+='</div>';
         }
+        let menuH='';
+        if(!c.system&&c.user===cUser){
+          menuH=`<div class="comment-menu-wrap"><button class="comment-menu-btn" onclick="event.stopPropagation();window._toggleCommentMenu(${ci})">⋯</button><div class="comment-menu" id="cmMenu${ci}" style="display:none"><button onclick="window._editComment(${ci})">✏️ Rediger</button><button class="cm-delete" onclick="window._deleteComment(${ci})">🗑 Slet</button></div></div>`;
+        }
         cH+=`<div class="comment"><span class="avatar ${AV[c.user]?.cls||'av-j'}" style="border:none;width:20px;height:20px;font-size:8px">${AV[c.user]?.ini||'?'}</span>
-          <div class="comment-body"><div class="comment-header"><span class="comment-name">${esc2(c.user)}</span><span class="comment-time">${esc2(c.time)}</span></div>
-          <div class="comment-text${c.system?' comment-system':''}">${renderMentions(esc2(c.text))}</div>${reactH}</div></div>`;
+          <div class="comment-body"><div class="comment-header"><span class="comment-name">${esc2(c.user)}</span><span class="comment-time">${esc2(c.time)}</span>${menuH}</div>
+          <div class="comment-text${c.system?' comment-system':''}" id="cmText${ci}">${renderMentions(esc2(c.text))}</div>${reactH}</div></div>`;
       });
       cH+=`<div class="comment-input-wrap"><div class="mention-dropdown" id="mentionDrop"></div><div class="comment-input"><input type="text" id="cInput" placeholder="Skriv en kommentar... (@ for mentions)" onkeydown="window._cKey(event)" oninput="window._cInput(event)"><button onclick="window._addComment()">Send</button></div></div></div>`;
     }
@@ -724,6 +742,50 @@ function initBoard(){
     if(!c.reactions[emoji].length)delete c.reactions[emoji];
     fbSave(t);
     editTask.comments=[...(t.comments||[])];
+    closeModal();window._openTask(editTask._key);
+  };
+
+  // ── Comment Edit/Delete ──
+  window._toggleCommentMenu=function(ci){
+    const menu=document.getElementById('cmMenu'+ci);if(!menu)return;
+    const isOpen=menu.style.display!=='none';
+    document.querySelectorAll('.comment-menu').forEach(m=>m.style.display='none');
+    menu.style.display=isOpen?'none':'block';
+  };
+  // Close menus on outside click
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('.comment-menu-wrap'))document.querySelectorAll('.comment-menu').forEach(m=>m.style.display='none');
+  });
+  window._editComment=function(ci){
+    document.querySelectorAll('.comment-menu').forEach(m=>m.style.display='none');
+    if(!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
+    const c=(t.comments||[])[ci];if(!c||c.user!==cUser)return;
+    const textEl=document.getElementById('cmText'+ci);if(!textEl)return;
+    textEl.innerHTML=`<div class="comment-edit-wrap"><input type="text" id="ceInput${ci}" value="${esc2(c.text)}"><button class="ce-save" onclick="window._saveEditComment(${ci})">Gem</button><button class="ce-cancel" onclick="window._cancelEditComment()">Annuller</button></div>`;
+    const inp=document.getElementById('ceInput'+ci);if(inp){inp.focus();inp.selectionStart=inp.selectionEnd=inp.value.length;
+    inp.onkeydown=function(e){if(e.key==='Enter')window._saveEditComment(ci);if(e.key==='Escape')window._cancelEditComment()}}
+  };
+  window._saveEditComment=function(ci){
+    if(!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
+    const c=(t.comments||[])[ci];if(!c||c.user!==cUser)return;
+    const inp=document.getElementById('ceInput'+ci);if(!inp)return;
+    const newText=inp.value.trim();if(!newText)return;
+    c.text=newText;c.edited=true;
+    fbSave(t);editTask.comments=[...(t.comments||[])];
+    closeModal();window._openTask(editTask._key);
+  };
+  window._cancelEditComment=function(){
+    if(!editTask||!editTask._key)return;
+    closeModal();window._openTask(editTask._key);
+  };
+  window._deleteComment=function(ci){
+    if(!editTask||!editTask._key)return;
+    const t=tasks.find(x=>x._key===editTask._key);if(!t)return;
+    const c=(t.comments||[])[ci];if(!c||c.user!==cUser)return;
+    t.comments.splice(ci,1);
+    fbSave(t);editTask.comments=[...(t.comments||[])];
     closeModal();window._openTask(editTask._key);
   };
 
