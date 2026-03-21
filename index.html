@@ -880,6 +880,7 @@ function initBoard(){
     const ti=document.getElementById('tTitle').value.trim();if(!ti)return;
     const newPri=document.getElementById('tPri').value,newDl=document.getElementById('tDl').value;
     const data={title:ti,desc:document.getElementById('tDesc').value.trim(),priority:newPri,deadline:newDl,assignees:[...(editTask.assignees||[])],tags:[...(editTask.tags||[])],comments:editTask.comments||[],checklist:editTask.checklist||[],status:editTask.status,createdBy:editTask.createdBy||cUser,history:editTask.history||[]};
+    if(editTask.archived){data.archived=true;data.archivedAt=editTask.archivedAt}
     if(editTask._key){
       data._key=editTask._key;
       const old=tasks.find(x=>x._key===editTask._key);
