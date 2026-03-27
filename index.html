@@ -40,12 +40,22 @@
 --r:10px;--shadow:0 2px 8px rgba(0,0,0,.06)
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* Custom scrollbars */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-light)}
+.col-body::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar{width:5px}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;transition:background .3s}
-.topbar-left{display:flex;align-items:center;gap:12px}
-.app-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6ab0ff,#c4a5ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;transition:background .3s;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+[data-theme="dark"] .topbar{background:rgba(40,46,62,.85)}
+[data-theme="light"] .topbar{background:rgba(255,255,255,.85)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.app-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6ab0ff,#c4a5ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;box-shadow:0 2px 8px rgba(106,176,255,.3)}
 .app-title{font-size:15px;font-weight:700}.app-sub{font-size:11px;color:var(--text-dim)}
 .topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-divider{width:1px;height:24px;background:var(--border);margin:0 4px}
 .user-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);display:flex;align-items:center;gap:6px}
 .user-bar{display:flex;align-items:center;gap:6px}
 .user-chip.active{border-color:var(--blue-border);background:var(--blue-bg);color:var(--blue)}
@@ -67,15 +77,20 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .view-toggle button{padding:6px 12px;border:none;background:var(--surface2);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-dim);transition:all .15s}
 .view-toggle button.active{background:var(--blue-bg);color:var(--blue)}
 .view-toggle button:hover:not(.active){color:var(--text)}
-.progress-strip{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:flex-end;gap:20px;transition:background .3s}
-.prog-stats{display:flex;gap:18px}
-.prog-stat{display:flex;align-items:center;gap:7px}
-.prog-stat-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;line-height:1}
-.prog-stat-lbl{font-size:11px;color:var(--text-dim)}
+.progress-strip{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:20px;transition:background .3s}
+.prog-bar-wrap{flex:1;display:flex;align-items:center;gap:12px;min-width:0}
+.prog-bar{flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;display:flex}
+.prog-bar-seg{height:100%;transition:width .4s ease}
+.prog-bar-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-mid);white-space:nowrap}
+.prog-stats{display:flex;gap:14px}
+.prog-stat{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);transition:all .15s}
+.prog-stat:hover{border-color:var(--border-light)}
+.prog-stat-val{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;line-height:1}
+.prog-stat-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.02em}
 /* Main layout wrapper */
 .main-wrap{display:flex;min-height:calc(100vh - 100px)}
 .main-left{flex:1;overflow:hidden;display:flex;flex-direction:column}
-.board{display:flex;gap:14px;padding:18px 24px;overflow-x:auto;flex:1}
+.board{display:flex;gap:16px;padding:20px 24px;overflow-x:auto;flex:1}
 /* Activity Feed */
 .feed-panel{width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;transition:background .3s}
 .feed-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -111,17 +126,18 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .board{flex-direction:column}
 .col{min-width:auto;max-width:none}
 }
-.col{min-width:310px;flex:1;display:flex;flex-direction:column;background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:background .3s}
-.col-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.col-head.todo{background:linear-gradient(135deg,rgba(106,176,255,.06),transparent)}
-.col-head.prog{background:linear-gradient(135deg,rgba(251,191,36,.06),transparent)}
-.col-head.done{background:linear-gradient(135deg,rgba(74,222,128,.06),transparent)}
-.col-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.col{min-width:310px;flex:1;display:flex;flex-direction:column;background:var(--surface);border-radius:14px;border:1px solid var(--border);overflow:hidden;transition:background .3s,box-shadow .3s}
+.col:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.col-head{padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.col-head.todo{background:linear-gradient(135deg,rgba(106,176,255,.08),transparent)}
+.col-head.prog{background:linear-gradient(135deg,rgba(251,191,36,.08),transparent)}
+.col-head.done{background:linear-gradient(135deg,rgba(74,222,128,.08),transparent)}
+.col-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
 .col-dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 8px currentColor}
-.col-count{font-size:11px;font-weight:700;color:var(--text-dim);background:var(--surface3);padding:3px 10px;border-radius:10px}
-.col-body{flex:1;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
-.task-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s;position:relative}
-.task-card:hover{border-color:var(--border-light);transform:translateY(-1px);box-shadow:var(--shadow)}
+.col-count{font-size:11px;font-weight:700;color:var(--text-dim);background:var(--surface3);padding:3px 10px;border-radius:10px;font-family:'JetBrains Mono',monospace}
+.col-body{flex:1;padding:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.task-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);position:relative}
+.task-card:hover{border-color:var(--border-light);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.12)}
 .task-card.unclaimed{border-color:var(--purple-border);background:var(--purple-bg)}
 .task-card.unclaimed::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--purple);border-radius:3px 0 0 3px}
 .task-card.escalated{border-color:var(--red-border);box-shadow:0 0 12px rgba(251,113,133,.2)}
@@ -135,7 +151,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .task-desc{font-size:11px;color:var(--text-mid);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .deadline-bar{height:3px;border-radius:2px;margin-bottom:10px;background:var(--surface3);overflow:hidden}
 .deadline-fill{height:100%;border-radius:2px}
-.task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:4px}
 .avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0;border:2px solid var(--surface2)}
 .av-d{background:#8b5cf6}.av-j{background:#3b82f6}.av-h{background:#10b981}
 .avatar-stack{display:flex}.avatar-stack .avatar+.avatar{margin-left:-6px}
@@ -149,8 +165,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .task-dl.soon{color:var(--amber);font-weight:600}
 .task-badges{display:flex;gap:4px;margin-left:auto}
 .task-badge{font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:2px;background:var(--surface3);padding:2px 6px;border-radius:8px}
-.add-btn{width:calc(100% - 20px);margin:0 10px 10px;padding:10px;border-radius:8px;border:1px dashed var(--border);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:all .15s}
-.add-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.add-btn{width:calc(100% - 20px);margin:0 10px 10px;padding:10px;border-radius:8px;border:1px dashed var(--border);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:all .2s}
+.add-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);transform:translateY(-1px)}
 /* Week View */
 .week-view{padding:18px 24px;min-height:calc(100vh - 180px);display:none}
 .week-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
@@ -172,15 +188,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .wt-assignees{font-size:9px;color:var(--text-dim);font-weight:500;margin-top:2px}
 .week-no-dl{text-align:center;color:var(--text-dim);font-size:10px;font-style:italic;padding:20px 6px}
 /* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:slideUp .25s cubic-bezier(.16,1,.3,1)}
-@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0}
-.modal-title{font-size:16px;font-weight:700}
-.modal-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--surface3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:all .15s}
-.modal-close:hover{background:var(--border);color:var(--text)}
-.modal-body{padding:16px 24px 24px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.35);animation:slideUp .3s cubic-bezier(.16,1,.3,1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 0}
+.modal-title{font-size:17px;font-weight:800}
+.modal-close{width:34px;height:34px;border-radius:9px;border:none;background:var(--surface3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:all .15s}
+.modal-close:hover{background:var(--red-bg);color:var(--red)}
+.modal-body{padding:18px 26px 26px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:11px;font-weight:600;color:var(--text-dim);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em}
 .field input,.field textarea,.field select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:13px;color:var(--text);background:var(--surface2);transition:border-color .15s}
@@ -193,9 +209,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .a-chip:hover{border-color:var(--text-dim)}
 .a-chip.selected{border-color:var(--blue-border);background:var(--blue-bg);color:var(--blue)}
 .a-chip .ca{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;border:none}
-.btn{padding:10px 20px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn{padding:10px 20px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
 .btn:active{transform:scale(.97)}
-.btn-primary{background:var(--blue);color:#000;font-weight:700}.btn-primary:hover{background:#79b8ff}
+.btn-primary{background:var(--blue);color:#000;font-weight:700;box-shadow:0 2px 8px rgba(106,176,255,.25)}.btn-primary:hover{background:#79b8ff;box-shadow:0 4px 12px rgba(106,176,255,.35)}
 .btn-secondary{background:var(--surface3);color:var(--text-mid)}.btn-secondary:hover{color:var(--text)}
 .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}.btn-danger:hover{background:var(--red);color:#fff}
 .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
@@ -290,8 +306,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .archive-list{background:var(--surface);border-top:1px solid var(--border);padding:0 24px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s}
 .archive-list.open{max-height:600px;overflow-y:auto;padding:12px 24px}
 .archive-grid{display:flex;flex-wrap:wrap;gap:8px}
-.archive-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .15s;width:calc(33.33% - 6px);min-width:240px;opacity:.7}
-.archive-card:hover{opacity:1;border-color:var(--border-light);transform:translateY(-1px)}
+.archive-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .2s;width:calc(33.33% - 6px);min-width:240px;opacity:.6}
+.archive-card:hover{opacity:1;border-color:var(--border-light);transform:translateY(-2px);box-shadow:var(--shadow)}
 .archive-card .ac-title{font-size:12px;font-weight:600;margin-bottom:4px}
 .archive-card .ac-meta{font-size:10px;color:var(--text-dim);display:flex;gap:8px}
 @media(max-width:900px){.archive-card{width:100%}}
@@ -315,25 +331,29 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 /* Drag & Drop */
 .task-card[draggable="true"]{cursor:grab}
 .task-card[draggable="true"]:active{cursor:grabbing}
-.task-card.dragging{opacity:.4;transform:scale(.96)}
-.col-body.drag-over{background:var(--blue-bg);border:2px dashed var(--blue-border);border-radius:8px;transition:background .15s}
+.task-card.dragging{opacity:.3;transform:scale(.95);transition:all .15s}
+.col-body.drag-over{background:var(--blue-bg);border:2px dashed var(--blue-border);border-radius:8px;transition:background .2s;box-shadow:inset 0 0 20px rgba(106,176,255,.05)}
 /* Tags */
 .tag-dots{display:flex;gap:3px;margin-right:4px}
 .tag-dot{width:7px;height:7px;border-radius:50%}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.card-tag{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.03em}
 .tag-chips{display:flex;gap:6px;flex-wrap:wrap}
 .tag-chip{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);transition:all .15s}
 .tag-chip:hover{opacity:.85}
 .tag-chip.selected{color:#fff}
-.empty-col{text-align:center;padding:24px 16px;color:var(--text-dim);font-size:12px}
+.empty-col{text-align:center;padding:40px 16px;color:var(--text-dim);font-size:12px;line-height:1.6}
+.empty-col-icon{font-size:28px;margin-bottom:8px;opacity:.5}
+.empty-col-text{font-size:11px;color:var(--text-dim)}
 .created-by{font-size:11px;color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .loading-screen{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px}
 .loading-screen .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* Welcome Banner */
-.welcome-banner{background:linear-gradient(135deg,var(--blue-bg),var(--purple-bg));border:1px solid var(--blue-border);border-radius:12px;margin:16px 24px 0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;animation:fadeIn .3s}
-.welcome-text{font-size:14px;font-weight:600;line-height:1.5}
-.welcome-text .welcome-name{color:var(--blue);font-weight:700}
-.welcome-stats{font-size:12px;color:var(--text-mid);margin-top:4px}
+.welcome-banner{background:linear-gradient(135deg,var(--blue-bg),var(--purple-bg));border:1px solid var(--blue-border);border-radius:14px;margin:16px 24px 0;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;animation:fadeIn .4s}
+.welcome-text{font-size:15px;font-weight:600;line-height:1.6}
+.welcome-text .welcome-name{color:var(--blue);font-weight:800}
+.welcome-stats{font-size:12px;color:var(--text-mid);margin-top:6px;display:flex;gap:16px;flex-wrap:wrap}
 .welcome-stats span{font-weight:700}
 .welcome-stats .ws-prog{color:var(--amber)}
 .welcome-stats .ws-over{color:var(--red)}
@@ -341,7 +361,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .welcome-close{background:none;border:none;font-size:18px;color:var(--text-dim);cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .15s;flex-shrink:0}
 .welcome-close:hover{color:var(--text);background:var(--surface3)}
 /* Undo Toast */
-.undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:200;animation:slideUp .25s cubic-bezier(.16,1,.3,1);font-size:13px;font-weight:600;color:var(--text)}
+.undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 22px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.25);z-index:200;animation:slideUp .3s cubic-bezier(.16,1,.3,1);font-size:13px;font-weight:600;color:var(--text);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .undo-toast .undo-btn{background:var(--blue);color:#000;border:none;padding:6px 14px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
 .undo-toast .undo-btn:hover{background:#79b8ff}
 .undo-toast .undo-timer{width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;flex-shrink:0}
@@ -369,11 +389,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div class="topbar-right">
 <div class="search-wrap" id="searchWrap" style="display:none"><input class="search-input" id="searchInput" type="text" placeholder="Søg opgaver..." oninput="window._onSearch()"><button class="search-clear" id="searchClear" onclick="window._clearSearch()">✕</button></div>
 <button class="filter-btn" id="myFilterBtn" onclick="window._toggleMyFilter()" style="display:none">👤 Mine</button>
+<div class="topbar-divider" id="topDivider1" style="display:none"></div>
 <div class="view-toggle" id="viewToggle" style="display:none">
   <button class="active" data-view="kanban" onclick="window._setView('kanban')">☰ Kanban</button>
   <button data-view="week" onclick="window._setView('week')">📅 Uge</button>
 </div>
 <button class="toggle-btn" id="themeBtn" onclick="window._toggleTheme()" title="Skift tema" style="display:none">🌙</button>
+<div class="topbar-divider" id="topDivider2" style="display:none"></div>
 <div class="user-chip active" id="myChip"><span class="chip-dot" id="myDot"></span><span id="myName"></span><span class="sync-dot" id="syncDot" title="Synkroniseret"></span></div>
 </div>
 </div>
@@ -434,16 +456,16 @@ if(!cUser)showUserPicker();else initBoard();
 function showUserPicker(){
   document.getElementById('myChip').style.display='none';
   document.getElementById('progStrip').innerHTML='';
-  document.getElementById('board').innerHTML=`<div style="margin:60px auto;text-align:center;max-width:400px">
-    <div style="font-size:40px;margin-bottom:16px">✈</div>
-    <div style="font-size:20px;font-weight:700;margin-bottom:6px">Apron Task Board</div>
-    <div style="font-size:13px;color:var(--text-mid);margin-bottom:28px">Vælg din profil for at fortsætte</div>
+  document.getElementById('board').innerHTML=`<div style="margin:80px auto;text-align:center;max-width:420px;padding:0 20px">
+    <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#6ab0ff,#c4a5ff);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px;box-shadow:0 4px 20px rgba(106,176,255,.3)">✈️</div>
+    <div style="font-size:22px;font-weight:800;margin-bottom:6px">Apron Task Board</div>
+    <div style="font-size:13px;color:var(--text-mid);margin-bottom:32px">Vælg din profil for at fortsætte</div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      ${USERS.map(u=>`<button onclick="location.href=location.pathname+'?user=${u}'" style="padding:16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s"
-        onmouseover="this.style.borderColor='${AV[u].color}'" onmouseout="this.style.borderColor='var(--border)'">
-        <span class="avatar ${AV[u].cls}" style="width:36px;height:36px;font-size:13px;border:none">${AV[u].ini}</span>${u}</button>`).join('')}
+      ${USERS.map(u=>`<button onclick="location.href=location.pathname+'?user=${u}'" style="padding:18px 20px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .2s"
+        onmouseover="this.style.borderColor='${AV[u].color}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none';this.style.boxShadow='none'">
+        <span class="avatar ${AV[u].cls}" style="width:40px;height:40px;font-size:14px;border:none">${AV[u].ini}</span>${u}</button>`).join('')}
     </div>
-    <div style="font-size:11px;color:var(--text-dim);margin-top:20px">Bookmark dit link så du altid logger ind som dig selv</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:24px;line-height:1.5">💡 Bookmark dit link så du altid logger ind som dig selv</div>
   </div>`;
 }
 
@@ -454,6 +476,8 @@ function initBoard(){
   document.getElementById('themeBtn').style.display='flex';
   document.getElementById('myFilterBtn').style.display='flex';
   document.getElementById('searchWrap').style.display='flex';
+  document.getElementById('topDivider1').style.display='block';
+  document.getElementById('topDivider2').style.display='block';
 
   let tasks=[],editTask=null,initialized=false,mentionIdx=-1,myFilter=false,searchQuery='';
 
@@ -502,7 +526,7 @@ function initBoard(){
     const waiting=tasks.filter(t=>(!t.assignees||!t.assignees.length)&&!t.archived&&t.status!=='done').length;
     const hour=new Date().getHours();
     const greeting=hour<12?'God morgen':hour<18?'God eftermiddag':'God aften';
-    wrap.innerHTML=`<div class="welcome-banner"><div><div class="welcome-text">${greeting}, <span class="welcome-name">${cUser}</span></div><div class="welcome-stats"><span class="ws-prog">${inProg} opgaver i gang</span>${overdue?`, <span class="ws-over">${overdue} overskredet deadline</span>`:''}, <span class="ws-wait">${waiting} venter på dig</span></div></div><button class="welcome-close" onclick="window._dismissWelcome()">✕</button></div>`;
+    wrap.innerHTML=`<div class="welcome-banner"><div><div class="welcome-text">${greeting}, <span class="welcome-name">${cUser}</span> ✈️</div><div class="welcome-stats"><span class="ws-prog">⚡ ${inProg} i gang</span>${overdue?`<span class="ws-over">⏰ ${overdue} overskredet</span>`:''}<span class="ws-wait">🙋 ${waiting} venter</span></div></div><button class="welcome-close" onclick="window._dismissWelcome()">✕</button></div>`;
   }
   let histCollapsed=false;
   window._toggleHistory=function(){
@@ -517,18 +541,32 @@ function initBoard(){
   };
 
   function renderProgress(){
-    const todo=tasks.filter(t=>t.status==='todo').length,prog=tasks.filter(t=>t.status==='in-progress').length;
-    const done=tasks.filter(t=>t.status==='done'&&!t.archived).length;
+    const active=tasks.filter(t=>!t.archived);
+    const todo=active.filter(t=>t.status==='todo').length,prog=active.filter(t=>t.status==='in-progress').length;
+    const done=active.filter(t=>t.status==='done').length;
     const arch=tasks.filter(t=>t.archived).length;
-    const unc=tasks.filter(t=>(!t.assignees||!t.assignees.length)&&t.status!=='done'&&!t.archived).length;
-    const escN=tasks.filter(t=>t.status!=='done'&&!t.archived&&checkEsc(t).esc).length;
-    document.getElementById('progStrip').innerHTML=`<div class="prog-stats">
+    const total=todo+prog+done;
+    const unc=active.filter(t=>(!t.assignees||!t.assignees.length)&&t.status!=='done').length;
+    const escN=active.filter(t=>t.status!=='done'&&checkEsc(t).esc).length;
+    const pctDone=total?Math.round(done/total*100):0;
+    const pctProg=total?Math.round(prog/total*100):0;
+    const pctTodo=total?Math.round(todo/total*100):0;
+    document.getElementById('progStrip').innerHTML=`
+      <div class="prog-bar-wrap">
+        <div class="prog-bar">
+          <div class="prog-bar-seg" style="width:${pctDone}%;background:var(--green)"></div>
+          <div class="prog-bar-seg" style="width:${pctProg}%;background:var(--amber)"></div>
+          <div class="prog-bar-seg" style="width:${pctTodo}%;background:var(--blue);opacity:.4"></div>
+        </div>
+        <span class="prog-bar-label">${pctDone}% færdig</span>
+      </div>
+      <div class="prog-stats">
       <div class="prog-stat"><div class="prog-stat-val" style="color:var(--blue)">${todo}</div><div class="prog-stat-lbl">To Do</div></div>
       <div class="prog-stat"><div class="prog-stat-val" style="color:var(--amber)">${prog}</div><div class="prog-stat-lbl">I gang</div></div>
       <div class="prog-stat"><div class="prog-stat-val" style="color:var(--green)">${done}</div><div class="prog-stat-lbl">Færdig</div></div>
       ${unc?`<div class="prog-stat"><div class="prog-stat-val" style="color:var(--purple)">${unc}</div><div class="prog-stat-lbl">Unclaimed</div></div>`:''}
       ${escN?`<div class="prog-stat"><div class="prog-stat-val" style="color:var(--red)">${escN}</div><div class="prog-stat-lbl">Eskaleret</div></div>`:''}
-      ${arch?`<div class="prog-stat"><div class="prog-stat-val" style="color:var(--text-dim)">${arch}</div><div class="prog-stat-lbl">Arkiveret</div></div>`:''}
+      ${arch?`<div class="prog-stat"><div class="prog-stat-val" style="color:var(--text-dim)">${arch}</div><div class="prog-stat-lbl">Arkiv</div></div>`:''}
     </div>`;
   }
 
@@ -566,7 +604,7 @@ function initBoard(){
         return({high:0,medium:1,low:2}[dispPri(a)]||1)-({high:0,medium:1,low:2}[dispPri(b)]||1);
       });
       h+=`<div class="col"><div class="col-head ${s.cls}"><span class="col-title"><span class="col-dot" style="color:${s.dot};background:${s.dot}"></span>${s.label}</span><span class="col-count">${st.length}</span></div><div class="col-body" data-status="${s.key}">`;
-      if(!st.length)h+=`<div class="empty-col">Ingen opgaver her</div>`;
+      if(!st.length){const emptyIcons={todo:'📋',['in-progress']:'⏳',done:'🎉'};const emptyTexts={todo:'Ingen opgaver at lave',['in-progress']:'Ingen opgaver i gang',done:'Ingen færdige opgaver endnu'};h+=`<div class="empty-col"><div class="empty-col-icon">${emptyIcons[s.key]||'📋'}</div><div class="empty-col-text">${emptyTexts[s.key]||'Ingen opgaver her'}</div></div>`}
       st.forEach(t=>{
         const asgn=t.assignees||[],uc=!asgn.length;
         const esc=checkEsc(t),dp=dispPri(t);
@@ -588,10 +626,10 @@ function initBoard(){
         }
         if(t.deadline&&t.status!=='done')h+=`<span class="task-dl ${di.cls}">${di.label}</span>`;
         const tags=t.tags||[];
+        if(tags.length)h+=`<div class="card-tags">${tags.map(tg=>{const td=TAGS.find(x=>x.key===tg);return td?`<span class="card-tag" style="background:${td.bg};color:${td.color};border:1px solid ${td.border}">${td.label}</span>`:''}).join('')}</div>`;
         h+=`<span class="task-badges">`;
-        if(tags.length)h+=`<span class="tag-dots">${tags.map(tg=>{const td=TAGS.find(x=>x.key===tg);return td?`<span class="tag-dot" style="background:${td.color}" title="${td.label}"></span>`:''}).join('')}</span>`;
-        if(cmts.length)h+=`<span class="task-badge">💬${cmts.length}</span>`;
-        if(cl.length)h+=`<span class="task-badge">☑${clD}/${cl.length}</span>`;
+        if(cmts.length)h+=`<span class="task-badge">💬 ${cmts.length}</span>`;
+        if(cl.length)h+=`<span class="task-badge">☑ ${clD}/${cl.length}</span>`;
         h+=`</span></div></div>`;
       });
       if(s.key==='done'&&st.length){h+=`</div><button class="add-btn" onclick="window._archiveAll()" style="border-color:var(--green-border);color:var(--green)">📦 Arkivér alle færdige</button>`}
@@ -1335,7 +1373,7 @@ function esc2(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').r
   dbg.style.cssText='position:fixed;bottom:0;left:0;right:0;max-height:150px;overflow-y:auto;background:#1a1a2e;border-top:2px solid #f59e0b;font-family:JetBrains Mono,monospace;font-size:11px;padding:8px 12px;z-index:9999;display:none;color:#e2e8f0';
   document.body.appendChild(dbg);
   const togBtn=document.createElement('button');togBtn.textContent='🐛';
-  togBtn.style.cssText='position:fixed;bottom:8px;right:8px;z-index:9999;padding:4px 8px;border-radius:6px;border:1px solid #f59e0b;background:#1a1a2e;color:#f59e0b;font-size:12px;cursor:pointer';
+  togBtn.style.cssText='position:fixed;bottom:8px;right:8px;z-index:9999;padding:4px 8px;border-radius:6px;border:1px solid #f59e0b;background:#1a1a2e;color:#f59e0b;font-size:12px;cursor:pointer;display:none';
   togBtn.onclick=()=>{dbg.style.display=dbg.style.display==='none'?'block':'none'};
   document.body.appendChild(togBtn);
   const logs=[];
